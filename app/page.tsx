@@ -10,6 +10,7 @@ import {
   Inbox,
   LockKeyhole,
   Mail,
+  Plus,
   ShieldCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -28,7 +29,32 @@ function GoogleMark() {
   return <span aria-hidden="true" className="text-[19px] font-bold tracking-[-.12em] text-[#4285f4]">G</span>
 }
 
+function GoogleAccountSheet({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center" role="dialog" aria-modal="true" aria-labelledby="google-account-title">
+      <button aria-label="Close account picker" onClick={onClose} className="absolute inset-0 bg-black/70 backdrop-blur-[7px]" />
+      <section className="relative w-full max-w-[430px] rounded-t-[28px] bg-white px-6 pb-8 pt-7 text-[#202124] shadow-[0_-12px_60px_rgba(0,0,0,.45)] animate-sheet-up">
+        <div className="mx-auto mb-6 h-1 w-10 rounded-full bg-[#dadce0]" />
+        <div className="flex flex-col items-center text-center">
+          <div className="flex size-12 items-center justify-center rounded-full bg-white text-[30px] font-semibold tracking-[-.15em] text-[#4285f4] shadow-[0_1px_4px_rgba(60,64,67,.25)]"><GoogleMark /></div>
+          <h2 id="google-account-title" className="mt-4 text-[22px] font-normal tracking-[-.02em]">Choose an account</h2>
+          <p className="mt-1 text-sm text-[#5f6368]">to continue to SubShield</p>
+        </div>
+        <div className="mt-7 flex flex-col gap-1">
+          <button onClick={onClose} className="flex w-full items-center gap-4 rounded-xl px-2 py-3 text-left transition-colors hover:bg-[#f1f3f4] active:bg-[#e8eaed]">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#00a878] text-lg font-medium text-white">A</span>
+            <span className="min-w-0"><span className="block truncate text-[15px] font-semibold text-[#202124]">Alex Doe</span><span className="mt-0.5 block truncate text-sm text-[#5f6368]">alex.doe@gmail.com</span></span>
+          </button>
+          <button onClick={onClose} className="flex w-full items-center gap-4 rounded-xl px-2 py-3 text-left transition-colors hover:bg-[#f1f3f4] active:bg-[#e8eaed]"><span className="flex size-11 shrink-0 items-center justify-center rounded-full border border-[#dadce0] text-[#5f6368]"><Plus className="size-5" /></span><span className="text-[15px] text-[#3c4043]">Use another account</span></button>
+        </div>
+        <p className="mt-7 border-t border-[#e8eaed] pt-5 text-center text-[11px] leading-[1.45] text-[#80868b]">To continue, Google will share your name and email address with SubShield.</p>
+      </section>
+    </div>
+  )
+}
+
 function LoginScreen({ onEmail }: { onEmail: () => void }) {
+  const [googleOpen, setGoogleOpen] = useState(false)
   return (
     <main className="relative flex min-h-[100svh] items-center justify-center overflow-hidden bg-[#0A0A0F] px-5 py-10 text-white">
       <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-[-220px] size-[460px] -translate-x-1/2 rounded-full bg-[#00ff88]/[0.07] blur-[110px]" />
@@ -40,11 +66,12 @@ function LoginScreen({ onEmail }: { onEmail: () => void }) {
         </div>
         <div className="mt-9 flex w-full flex-col gap-3 animate-rise [animation-delay:180ms] [animation-fill-mode:backwards]">
           <Button className="h-14 w-full rounded-[12px] bg-[#050507] text-[14px] font-medium text-white ring-1 ring-white/10 hover:bg-[#111116] active:scale-[.985]"><Apple data-icon="inline-start" className="fill-white" />Continue with Apple</Button>
-          <Button className="h-14 w-full rounded-[12px] bg-white text-[14px] font-medium text-[#101116] hover:bg-[#e8ebe9] active:scale-[.985]"><GoogleMark />Continue with Google</Button>
+          <Button onClick={() => setGoogleOpen(true)} className="h-14 w-full rounded-[12px] bg-white text-[14px] font-medium text-[#101116] hover:bg-[#e8ebe9] active:scale-[.985]"><GoogleMark />Continue with Google</Button>
           <Button onClick={onEmail} variant="outline" className="h-14 w-full rounded-[12px] border-[#00ff88]/70 bg-[#00ff88]/[0.035] text-[14px] font-medium text-[#00ff88] hover:bg-[#00ff88]/[0.1] hover:text-[#5affb4] active:scale-[.985]">Sign up with Email<ArrowRight data-icon="inline-end" /></Button>
         </div>
         <p className="mt-8 flex items-center gap-2 text-center text-[11px] leading-4 text-[#737984] animate-rise [animation-delay:280ms] [animation-fill-mode:backwards]"><LockKeyhole className="size-3.5 shrink-0 text-[#00ff88]/80" />We will NEVER ask for your bank password.</p>
       </div>
+      {googleOpen && <GoogleAccountSheet onClose={() => setGoogleOpen(false)} />}
     </main>
   )
 }
