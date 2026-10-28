@@ -11,6 +11,7 @@ import {
   LockKeyhole,
   Mail,
   Plus,
+  ScanFace,
   ShieldCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -53,8 +54,33 @@ function GoogleAccountSheet({ onClose }: { onClose: () => void }) {
   )
 }
 
+function AppleSignInModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-6" role="dialog" aria-modal="true" aria-labelledby="apple-signin-title">
+      <button aria-label="Close Apple sign-in" onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-[10px]" />
+      <section className="relative w-full max-w-[340px] rounded-[24px] border border-white/[0.08] bg-[#1C1C1E] px-6 pb-5 pt-7 text-white shadow-[0_24px_90px_rgba(0,0,0,.6)] animate-rise">
+        <div className="flex flex-col items-center text-center">
+          <Apple aria-hidden="true" className="size-10 fill-white text-white drop-shadow-[0_0_14px_rgba(255,255,255,.28)]" />
+          <h2 id="apple-signin-title" className="mt-4 text-[20px] font-semibold tracking-[-.025em]">Sign in with Apple</h2>
+          <p className="mt-2 max-w-[260px] text-[13px] leading-[1.4] text-[#98989F]">SubShield wants to use your Apple ID to sign in.</p>
+        </div>
+        <div className="mt-6 flex items-center gap-3 rounded-[14px] border border-white/[0.07] bg-white/[0.045] px-3.5 py-3">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#00A878] text-lg font-medium text-white">A</span>
+          <div className="min-w-0 text-left"><p className="truncate text-[15px] font-medium text-white">Alex Doe</p><p className="mt-0.5 text-[12px] text-[#98989F]">Hide My Email</p></div>
+        </div>
+        <div className="mt-5 flex flex-col gap-2.5">
+          <button onClick={onClose} className="h-12 rounded-[12px] bg-white text-[15px] font-medium text-black transition-transform hover:bg-[#e7e7e9] active:scale-[.985]">Continue as Alex</button>
+          <button onClick={onClose} className="h-12 rounded-[12px] bg-[#2C2C2E] text-[15px] font-medium text-white transition-colors hover:bg-[#3A3A3C] active:scale-[.985]">Cancel</button>
+        </div>
+        <div className="mt-6 flex justify-center text-[#98989F]"><ScanFace aria-label="Face ID" className="size-7" strokeWidth={1.35} /></div>
+      </section>
+    </div>
+  )
+}
+
 function LoginScreen({ onEmail }: { onEmail: () => void }) {
   const [googleOpen, setGoogleOpen] = useState(false)
+  const [appleOpen, setAppleOpen] = useState(false)
   return (
     <main className="relative flex min-h-[100svh] items-center justify-center overflow-hidden bg-[#0A0A0F] px-5 py-10 text-white">
       <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-[-220px] size-[460px] -translate-x-1/2 rounded-full bg-[#00ff88]/[0.07] blur-[110px]" />
@@ -65,14 +91,15 @@ function LoginScreen({ onEmail }: { onEmail: () => void }) {
           <p className="mx-auto mt-5 max-w-[340px] text-[14px] leading-5 text-[#9ca3af]">No bank linking required. We use a private email alias to automatically track your trials and bills.</p>
         </div>
         <div className="mt-9 flex w-full flex-col gap-3 animate-rise [animation-delay:180ms] [animation-fill-mode:backwards]">
-          <Button className="h-14 w-full rounded-[12px] bg-[#050507] text-[14px] font-medium text-white ring-1 ring-white/10 hover:bg-[#111116] active:scale-[.985]"><Apple data-icon="inline-start" className="fill-white" />Continue with Apple</Button>
+          <Button onClick={() => setAppleOpen(true)} className="h-14 w-full rounded-[12px] bg-[#050507] text-[14px] font-medium text-white ring-1 ring-white/10 hover:bg-[#111116] active:scale-[.985]"><Apple data-icon="inline-start" className="fill-white" />Continue with Apple</Button>
           <Button onClick={() => setGoogleOpen(true)} className="h-14 w-full rounded-[12px] bg-white text-[14px] font-medium text-[#101116] hover:bg-[#e8ebe9] active:scale-[.985]"><GoogleMark />Continue with Google</Button>
           <Button onClick={onEmail} variant="outline" className="h-14 w-full rounded-[12px] border-[#00ff88]/70 bg-[#00ff88]/[0.035] text-[14px] font-medium text-[#00ff88] hover:bg-[#00ff88]/[0.1] hover:text-[#5affb4] active:scale-[.985]">Sign up with Email<ArrowRight data-icon="inline-end" /></Button>
         </div>
         <p className="mt-8 flex items-center gap-2 text-center text-[11px] leading-4 text-[#737984] animate-rise [animation-delay:280ms] [animation-fill-mode:backwards]"><LockKeyhole className="size-3.5 shrink-0 text-[#00ff88]/80" />We will NEVER ask for your bank password.</p>
       </div>
-      {googleOpen && <GoogleAccountSheet onClose={() => setGoogleOpen(false)} />}
-    </main>
+  {googleOpen && <GoogleAccountSheet onClose={() => setGoogleOpen(false)} />}
+      {appleOpen && <AppleSignInModal onClose={() => setAppleOpen(false)} />}
+  </main>
   )
 }
 
