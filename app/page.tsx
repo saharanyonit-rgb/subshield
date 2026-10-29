@@ -91,8 +91,10 @@ export default function Page() {
   const go = (screen: Screen) => setCurrentScreen(screen)
   const openDashboard = () => go(subscriptions.length ? 'dashboard' : 'empty-dashboard')
   const handleOAuth = async (provider: 'google' | 'apple') => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: `${window.location.origin}/auth/callback` } })
-    if (error) notify('Unable to start sign-in. Please try again.')
+    const { data, error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: `${window.location.origin}/auth/callback`, skipBrowserRedirect: true } })
+    if (error || !data.url) { notify('Unable to start sign-in. Please try again.'); return }
+    if (window.self !== window.top) window.open(data.url, '_blank', 'noopener,noreferrer')
+    else window.location.assign(data.url)
   }
   const handleEmailAuth = (email: string) => { setUserEmail(email); setShowEmailAuth(false); setAuthReady(true); openDashboard() }
   const openEmailAuth = (mode: 'sign-in' | 'sign-up') => { setEmailAuthMode(mode); setShowEmailAuth(true) }
