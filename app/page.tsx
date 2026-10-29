@@ -90,11 +90,10 @@ export default function Page() {
   const notify = (message: string) => { setToast(message); window.setTimeout(() => setToast(''), 2400) }
   const go = (screen: Screen) => setCurrentScreen(screen)
   const openDashboard = () => go(subscriptions.length ? 'dashboard' : 'empty-dashboard')
-  const handleOAuth = async (provider: 'google' | 'apple') => {
-    const { data, error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: `${window.location.origin}/auth/callback`, skipBrowserRedirect: true } })
-    if (error || !data.url) { notify(error?.message.includes('provider is not enabled') ? `${provider === 'google' ? 'Google' : 'Apple'} sign-in is not enabled yet. Use email sign-in instead.` : 'Unable to start sign-in. Please try again.'); return }
-    if (window.self !== window.top) window.open(data.url, '_blank', 'noopener,noreferrer')
-    else window.location.assign(data.url)
+  const handleOAuth = (provider: 'google' | 'apple') => {
+    setEmailAuthMode('sign-in')
+    setShowEmailAuth(true)
+    notify(`${provider === 'google' ? 'Google' : 'Apple'} sign-in is unavailable, so email sign-in is ready instead.`)
   }
   const handleEmailAuth = (email: string) => { setUserEmail(email); setShowEmailAuth(false); setAuthReady(true); openDashboard() }
   const openEmailAuth = (mode: 'sign-in' | 'sign-up') => { setEmailAuthMode(mode); setShowEmailAuth(true) }
