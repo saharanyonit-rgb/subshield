@@ -92,7 +92,7 @@ export default function Page() {
   const openDashboard = () => go(subscriptions.length ? 'dashboard' : 'empty-dashboard')
   const handleOAuth = async (provider: 'google' | 'apple') => {
     const { data, error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: `${window.location.origin}/auth/callback`, skipBrowserRedirect: true } })
-    if (error || !data.url) { notify('Unable to start sign-in. Please try again.'); return }
+    if (error || !data.url) { notify(error?.message.includes('provider is not enabled') ? `${provider === 'google' ? 'Google' : 'Apple'} sign-in is not enabled yet. Use email sign-in instead.` : 'Unable to start sign-in. Please try again.'); return }
     if (window.self !== window.top) window.open(data.url, '_blank', 'noopener,noreferrer')
     else window.location.assign(data.url)
   }
