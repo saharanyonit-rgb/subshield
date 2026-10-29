@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import {
   AlertTriangle,
   ArrowLeft,
@@ -34,7 +35,7 @@ import {
 
 type Screen = 'login' | 'empty-dashboard' | 'alias-reveal' | 'syncing' | 'dashboard' | 'trials' | 'settings' | 'pro-upgrade'
 type Theme = 'light' | 'dark'
-type Subscription = { id: number; name: string; price: number; nextBill: string; isTrial: boolean; hoursLeft?: number }
+type Subscription = { id: string | number; name: string; price: number; nextBill: string; isTrial: boolean; hoursLeft?: number; notes?: string }
 
 const initialSubscriptions: Subscription[] = [
   { id: 1, name: 'Netflix', price: 15.99, nextBill: 'Nov 12', isTrial: false },
@@ -47,13 +48,17 @@ const colors: Record<string, string> = { Netflix: 'bg-[#E50914]', Spotify: 'bg-[
 export default function Page() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('login')
   const [theme, setTheme] = useState<Theme>('light')
-  const [subscriptions, setSubscriptions] = useState(initialSubscriptions)
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [hasActiveTrials, setHasActiveTrials] = useState(true)
   const [isPro, setIsPro] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly')
   const [showEscapeRoute, setShowEscapeRoute] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
   const [toast, setToast] = useState('')
+  const [authReady, setAuthReady] = useState(false)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [showEmailAuth, setShowEmailAuth] = useState(false)
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     document.body.style.backgroundColor = theme === 'dark' ? '#000000' : '#F5F7FB'
@@ -61,23 +66,60 @@ export default function Page() {
     return () => { document.body.style.backgroundColor = ''; document.body.style.color = '' }
   }, [theme])
 
+  useEffect(() => {
+    let active = true
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!active) return
+      if (!data.user) { setAuthReady(true); return }
+      setUserEmail(data.user.email ?? null)
+      const [{ data: profile }, { data: rows }] = await Promise.all([
+        supabase.from('profiles').select('theme, is_pro').eq('id', data.user.id).maybeSingle(),
+        supabase.from('subscriptions').select('id, name, price, next_bill, is_trial, hours_left, notes').eq('user_id', data.user.id).order('created_at'),
+      ])
+      if (profile?.theme === 'dark' || profile?.theme === 'light') setTheme(profile.theme)
+      if (typeof profile?.is_pro === 'boolean') setIsPro(profile.is_pro)
+      if (rows) setSubscriptions(rows.map((row) => ({ id: row.id, name: row.name, price: Number(row.price), nextBill: row.next_bill, isTrial: row.is_trial, hoursLeft: row.hours_left ?? undefined, notes: row.notes ?? undefined })))
+      setAuthReady(true)
+    })
+    return () => { active = false }
+  }, [supabase])
+
   const notify = (message: string) => { setToast(message); window.setTimeout(() => setToast(''), 2400) }
   const go = (screen: Screen) => setCurrentScreen(screen)
   const openDashboard = () => go(subscriptions.length ? 'dashboard' : 'empty-dashboard')
+  const handleOAuth = async (provider: 'google' | 'apple') => {
+    const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: `${window.location.origin}/auth/callback` } })
+    if (error) notify('Unable to start sign-in. Please try again.')
+  }
+  const handleEmailAuth = (email: string) => { setUserEmail(email); setShowEmailAuth(false); setAuthReady(true); openDashboard() }
+  const changeTheme = async (nextTheme: Theme) => { setTheme(nextTheme); if (userEmail) { const { data: user } = await supabase.auth.getUser(); if (user.user) await supabase.from('profiles').upsert({ id: user.user.id, theme: nextTheme }, { onConflict: 'id' }) } }
+  const finishSync = async () => {
+    const { data: user } = await supabase.auth.getUser()
+    if (!user.user) return
+    const { data: rows } = await supabase.from('subscriptions').select('id, name, price, next_bill, is_trial, hours_left, notes').eq('user_id', user.user.id)
+    if (!rows?.length) {
+      const { data: seeded } = await supabase.from('subscriptions').insert(initialSubscriptions.map((item) => ({ user_id: user.user!.id, name: item.name, price: item.price, next_bill: `2026-${item.name === 'Adobe CC' ? '11-08' : item.name === 'Netflix' ? '11-12' : '11-15'}`, is_trial: item.isTrial, hours_left: item.hoursLeft ?? null }))).select('id, name, price, next_bill, is_trial, hours_left, notes')
+      if (seeded) setSubscriptions(seeded.map((row) => ({ id: row.id, name: row.name, price: Number(row.price), nextBill: row.next_bill, isTrial: row.is_trial, hoursLeft: row.hours_left ?? undefined })))
+    }
+    go('dashboard')
+  }
+
+  if (!authReady) return <main className="flex min-h-screen items-center justify-center text-sm text-[#6B7280]">Loading SubShield...</main>
 
   return <div className={`${theme === 'dark' ? 'theme-dark' : 'theme-light'} min-h-screen font-sans text-[#121A2B] transition-colors duration-300`}>
     <style>{`.theme-dark, .theme-dark > div { background:#000000 !important; color:#ffffff !important; color-scheme:dark; } .theme-dark [class~="bg-white"], .theme-dark [class*="bg-white/"] { background:#111111 !important; } .theme-dark [class*="bg-[#F5F7FB]"] { background:#000000 !important; } .theme-dark [class*="bg-[#E8ECFF]"] { background:#181818 !important; } .theme-dark [class*="text-[#121A2B]"] { color:#ffffff !important; } .theme-dark [class*="text-[#374151]"] { color:#e5e5e5 !important; } .theme-dark [class*="text-[#6B7280]"] { color:#a3a3a3 !important; } .theme-dark [class*="border-[#E5E9F2]"] { border-color:#292929 !important; } .theme-dark input, .theme-dark textarea { background:#111111 !important; color:#ffffff !important; border-color:#292929 !important; } .theme-dark .bg\\[\\#F5F7FB\\] { background:#0A0E1A !important; } .theme-dark .bg-white { background:#151B2E !important; } .theme-dark .bg\\[\\#E8ECFF\\] { background:#1E2A4A !important; } .theme-dark .text\\[\\#121A2B\\] { color:#fff !important; } .theme-dark .text\\[\\#6B7280\\] { color:#9CA3AF !important; } .theme-dark .border\\[\\#E5E9F2\\] { border-color:#2A3348 !important; } .theme-dark .shadow-\\[0_4px_20px_rgba\\(18\\,26\\,43\\,\\.06\\)\\] { box-shadow:0 4px 20px rgba(0,0,0,.25) !important; } .theme-dark input,.theme-dark textarea { background:#151B2E !important; color:#fff !important; border-color:#2A3348 !important; } .theme-dark .theme-surface { background:#151B2E !important; }`}</style>
     <div className="mx-auto min-h-screen w-full max-w-[430px] bg-[#F5F7FB] shadow-[0_0_60px_rgba(18,26,43,.08)] transition-colors duration-300">
-      {currentScreen === 'login' && <LoginScreen onContinue={() => go('empty-dashboard')} />}
+      {currentScreen === 'login' && <LoginScreen onContinue={() => setShowEmailAuth(true)} onGoogle={() => handleOAuth('google')} onApple={() => handleOAuth('apple')} />}
       {currentScreen === 'empty-dashboard' && <EmptyDashboard onAlias={() => go('alias-reveal')} onManual={() => setShowAddModal(true)} onSettings={() => go('settings')} />}
       {currentScreen === 'alias-reveal' && <AliasReveal onOpenEmail={() => go('syncing')} onLater={openDashboard} />}
-      {currentScreen === 'syncing' && <SyncingScreen onDone={() => go('dashboard')} />}
+      {currentScreen === 'syncing' && <SyncingScreen onDone={finishSync} />}
       {currentScreen === 'dashboard' && <Dashboard subscriptions={subscriptions} onAdd={() => setShowAddModal(true)} onTrials={() => go('trials')} onSettings={() => go('settings')} />}
       {currentScreen === 'trials' && <TrialsScreen subscriptions={subscriptions} hasActiveTrials={hasActiveTrials} onEmpty={() => setHasActiveTrials(false)} onBack={openDashboard} onAdd={() => setShowAddModal(true)} onEscape={() => setShowEscapeRoute(true)} onSettings={() => go('settings')} />}
-      {currentScreen === 'settings' && <SettingsScreen theme={theme} setTheme={setTheme} isPro={isPro} onDashboard={openDashboard} onTrials={() => go('trials')} onUpgrade={() => go('pro-upgrade')} notify={notify} />}
+      {currentScreen === 'settings' && <SettingsScreen theme={theme} setTheme={changeTheme} isPro={isPro} onDashboard={openDashboard} onTrials={() => go('trials')} onUpgrade={() => go('pro-upgrade')} notify={notify} />}
       {currentScreen === 'pro-upgrade' && <ProUpgrade selectedPlan={selectedPlan} setSelectedPlan={setSelectedPlan} onClose={() => go('settings')} onStarted={() => { setIsPro(true); go('settings'); notify('Pro is now active!') }} />}
-      {showAddModal && <ManualAddModal onClose={() => setShowAddModal(false)} onSave={(subscription) => { setSubscriptions((items) => [...items, subscription]); setShowAddModal(false); notify('Added to your tracker') }} />}
+      {showAddModal && <ManualAddModal onClose={() => setShowAddModal(false)} onSave={async (subscription) => { const { data: user } = await supabase.auth.getUser(); if (!user.user) return; const { data: row, error } = await supabase.from('subscriptions').insert({ user_id: user.user.id, name: subscription.name.trim(), price: subscription.price, next_bill: subscription.nextBill, is_trial: subscription.isTrial, hours_left: subscription.hoursLeft ?? null }).select('id, name, price, next_bill, is_trial, hours_left, notes').single(); if (error || !row) { notify('Could not save that subscription'); return } setSubscriptions((items) => [...items, { id: row.id, name: row.name, price: Number(row.price), nextBill: row.next_bill, isTrial: row.is_trial, hoursLeft: row.hours_left ?? undefined }]); setShowAddModal(false); notify('Added to your tracker') }} />}
       {showEscapeRoute && <EscapeRoute onClose={() => setShowEscapeRoute(false)} onBack={() => { setShowEscapeRoute(false); setHasActiveTrials(false); notify('You just saved $54.99!') }} />}
+      {showEmailAuth && <EmailAuthModal supabase={supabase} onClose={() => setShowEmailAuth(false)} onSuccess={handleEmailAuth} />}
       {toast && <div role="status" className="fixed bottom-5 left-1/2 z-[70] -translate-x-1/2 rounded-full bg-[#121A2B] px-4 py-3 text-sm font-semibold text-white shadow-xl">{toast}</div>}
     </div>
   </div>
@@ -86,9 +128,26 @@ export default function Page() {
 function GoogleBrandIcon() { return <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5"><path fill="#4285F4" d="M21.35 12.27c0-.7-.06-1.37-.18-2.02H12v3.82h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.7 2.91-4.2 2.91-7.19Z" /><path fill="#34A853" d="M12 21.6c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.92-3.31.92-2.55 0-4.71-1.72-5.49-4.04H3.27v2.53A9.74 9.74 0 0 0 12 21.6Z" /><path fill="#FBBC05" d="M6.51 13.67a5.86 5.86 0 0 1 0-3.34V7.8H3.27a9.74 9.74 0 0 0 0 8.4l3.24-2.53Z" /><path fill="#EA4335" d="M12 6.29c1.43 0 2.71.49 3.72 1.46l2.79-2.79C16.84 3.36 14.63 2.4 12 2.4a9.74 9.74 0 0 0-8.73 5.4l3.24 2.53c.78-2.32 2.94-4.04 5.49-4.04Z" /></svg> }
 function AppleBrandIcon() { return <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 fill-current"><path d="M17.05 12.54c-.02-2.36 1.93-3.5 2.02-3.55a4.34 4.34 0 0 0-3.42-1.85c-1.45-.15-2.86.87-3.6.87-.75 0-1.9-.85-3.12-.83a4.6 4.6 0 0 0-3.87 2.36c-1.67 2.9-.42 7.18 1.18 9.53.8 1.15 1.73 2.44 2.97 2.39 1.2-.05 1.65-.77 3.1-.77 1.45 0 1.86.77 3.11.74 1.3-.02 2.1-1.16 2.88-2.32a9.52 9.52 0 0 0 1.3-2.68 4.14 4.14 0 0 1-2.55-3.89ZM14.67 5.59a4.2 4.2 0 0 0 .96-3.03 4.28 4.28 0 0 0-2.77 1.43 4 4 0 0 0-.99 2.91 3.53 3.53 0 0 0 2.8-1.31Z" /></svg> }
 
-function LoginScreen({ onContinue }: { onContinue: () => void }) {
+function EmailAuthModal({ supabase, onClose, onSuccess }: { supabase: ReturnType<typeof createClient>; onClose: () => void; onSuccess: (email: string) => void }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const submit = async (event: FormEvent) => {
+    event.preventDefault(); setError(''); setBusy(true)
+    const result = mode === 'sign-in' ? await supabase.auth.signInWithPassword({ email, password }) : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ?? `${window.location.origin}/auth/callback` } })
+    setBusy(false)
+    if (result.error) { setError(result.error.message.toLowerCase().includes('confirm') ? 'Check your email to confirm your account.' : 'Unable to authenticate with those details.'); return }
+    if (mode === 'sign-up' && !result.data.session) { setError('Check your email to confirm your account.'); return }
+    onSuccess(email)
+  }
+  return <div className="fixed inset-0 z-[80] flex items-end bg-black/50 p-0 sm:items-center sm:justify-center sm:p-5"><form onSubmit={submit} className="w-full rounded-t-3xl bg-white p-5 sm:max-w-[380px] sm:rounded-3xl"><div className="flex items-center justify-between"><div><h2 className="text-xl font-bold">{mode === 'sign-in' ? 'Welcome back' : 'Create your account'}</h2><p className="mt-1 text-sm text-[#6B7280]">Use email and password to continue.</p></div><button type="button" onClick={onClose} aria-label="Close" className="rounded-full bg-[#F5F7FB] p-2"><X className="size-5" /></button></div><label className="mt-6 block text-sm font-semibold">Email<input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-2 h-12 w-full rounded-xl border border-[#E5E9F2] px-3" /></label><label className="mt-4 block text-sm font-semibold">Password<input required minLength={6} type="password" value={password} onChange={(event) => setPassword(event.target.value)} className="mt-2 h-12 w-full rounded-xl border border-[#E5E9F2] px-3" /></label>{error && <p role="alert" className="mt-3 text-sm text-[#B33226]">{error}</p>}<button disabled={busy} className="mt-5 h-12 w-full rounded-xl bg-[#2F5BFF] font-semibold text-white disabled:opacity-60">{busy ? 'Please wait...' : mode === 'sign-in' ? 'Sign in' : 'Create account'}</button><button type="button" onClick={() => setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in')} className="mt-4 w-full text-sm font-semibold text-[#2F5BFF]">{mode === 'sign-in' ? 'New to SubShield? Create an account' : 'Already have an account? Sign in'}</button></form></div>
+}
+
+function LoginScreen({ onContinue, onGoogle, onApple }: { onContinue: () => void; onGoogle: () => void; onApple: () => void }) {
   return <main className="flex min-h-screen flex-col justify-center px-6 py-12">
-    <div className="mx-auto w-full max-w-[360px] text-center"><div className="mx-auto flex size-20 items-center justify-center rounded-[24px] border-2 border-[#2F5BFF] bg-[#E8ECFF] text-[#2F5BFF]"><ShieldCheck className="size-10" /></div><h1 className="mt-7 text-[30px] font-bold leading-tight tracking-[-.04em]">Track your subscriptions.<br />Keep your bank data private.</h1><p className="mt-4 text-base text-[#6B7280]">No bank linking. No stress.</p><div className="mt-8 flex flex-col gap-3"><button onClick={onContinue} className="flex h-14 items-center justify-center gap-3 rounded-xl bg-[#2F5BFF] font-semibold text-white shadow-[0_8px_18px_rgba(47,91,255,.22)] transition hover:bg-[#244bd9]"><Mail className="size-5" />Continue with Email</button><button onClick={onContinue} className="flex h-14 items-center justify-center gap-3 rounded-xl border border-[#E5E9F2] bg-white font-semibold shadow-[0_4px_20px_rgba(18,26,43,.06)]"><GoogleBrandIcon /><span>Continue with Google</span></button><button onClick={onContinue} className="flex h-14 items-center justify-center gap-3 rounded-xl border border-[#E5E9F2] bg-white font-semibold shadow-[0_4px_20px_rgba(18,26,43,.06)]"><AppleBrandIcon />Continue with Apple</button></div><p className="mt-7 flex items-center justify-center gap-2 text-xs text-[#6B7280]"><LockKeyhole className="size-4 text-[#12B886]" />We will NEVER ask for your bank password.</p></div>
+    <div className="mx-auto w-full max-w-[360px] text-center"><div className="mx-auto flex size-20 items-center justify-center rounded-[24px] border-2 border-[#2F5BFF] bg-[#E8ECFF] text-[#2F5BFF]"><ShieldCheck className="size-10" /></div><h1 className="mt-7 text-[30px] font-bold leading-tight tracking-[-.04em]">Track your subscriptions.<br />Keep your bank data private.</h1><p className="mt-4 text-base text-[#6B7280]">No bank linking. No stress.</p><div className="mt-8 flex flex-col gap-3"><button onClick={onContinue} className="flex h-14 items-center justify-center gap-3 rounded-xl bg-[#2F5BFF] font-semibold text-white shadow-[0_8px_18px_rgba(47,91,255,.22)] transition hover:bg-[#244bd9]"><Mail className="size-5" />Continue with Email</button><button onClick={onGoogle} className="flex h-14 items-center justify-center gap-3 rounded-xl border border-[#E5E9F2] bg-white font-semibold shadow-[0_4px_20px_rgba(18,26,43,.06)]"><GoogleBrandIcon /><span>Continue with Google</span></button><button onClick={onApple} className="flex h-14 items-center justify-center gap-3 rounded-xl border border-[#E5E9F2] bg-white font-semibold shadow-[0_4px_20px_rgba(18,26,43,.06)]"><AppleBrandIcon />Continue with Apple</button></div><p className="mt-7 flex items-center justify-center gap-2 text-xs text-[#6B7280]"><LockKeyhole className="size-4 text-[#12B886]" />We will NEVER ask for your bank password.</p></div>
   </main>
 }
 
