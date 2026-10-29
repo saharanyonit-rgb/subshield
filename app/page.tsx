@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Inbox,
   LayoutDashboard,
+  Link2,
   LockKeyhole,
   Mail,
   Plus,
@@ -241,9 +242,36 @@ function LiveProcessingScreen({ onDashboard }: { onDashboard: () => void }) {
   )
 }
 
+function EscapeRouteModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const [copied, setCopied] = useState(false)
+  const [confirmed, setConfirmed] = useState(false)
+  const emailBody = `Dear Adobe Billing Team,\n\nI am writing to formally request the cancellation of my Adobe Creative Cloud subscription, effective immediately.\n\nAccount Email: alex@example.com\nReason: I no longer require this service.\n\nPlease confirm cancellation and ensure no further charges are applied to my account.\n\nThank you,\nAlex`
+  const copyTemplate = async () => {
+    await navigator.clipboard?.writeText(emailBody)
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 1800)
+  }
+  const openEmail = async () => {
+    await copyTemplate()
+    window.location.href = `mailto:billing@adobe.com?subject=${encodeURIComponent('Cancellation Request - Account #12345')}&body=${encodeURIComponent(emailBody)}`
+  }
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-[6px]" role="dialog" aria-modal="true" aria-labelledby="escape-route-title">
+      <section className="max-h-[92svh] w-full max-w-[430px] overflow-y-auto rounded-t-[26px] border border-white/10 bg-[#12121a] px-5 pb-8 pt-5 text-white shadow-[0_-18px_80px_rgba(0,0,0,.55)] animate-sheet-up">
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
+        <div className="flex items-start gap-3"><span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#1473e6] to-[#8b5cf6] text-lg font-bold text-white shadow-[0_0_24px_rgba(59,130,246,.3)]">Ai</span><div className="min-w-0 flex-1"><h2 id="escape-route-title" className="text-[21px] font-semibold tracking-[-.035em]">How to Cancel Adobe Creative Cloud</h2><p className="mt-1 text-sm leading-5 text-[#9ca3af]">Follow these steps to cancel before you&apos;re charged $54.99</p></div><button onClick={onClose} aria-label="Close escape route" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/[.08] text-[#d7dbe0] hover:bg-white/[.14]"><span className="text-xl leading-none">×</span></button></div>
+        <div className="mt-4 inline-flex rounded-full bg-[#ff3b30]/15 px-3 py-1.5 text-xs font-semibold text-[#ff6b63]">Hard · Requires Email</div>
+        {confirmed ? <div className="flex min-h-[430px] flex-col items-center justify-center text-center animate-rise"><div className="flex size-20 items-center justify-center rounded-full bg-[#00ff88]/15 text-[#00ff88] shadow-[0_0_40px_rgba(0,255,136,.18)]"><Check className="size-10" strokeWidth={2.5} /></div><h3 className="mt-6 text-[28px] font-semibold tracking-[-.05em] text-[#00ff88]">You just saved $54.99!</h3><p className="mt-3 text-sm text-[#9ca3af]">Adobe has been removed from your active trials.</p><Button onClick={onSaved} className="mt-8 h-13 w-full rounded-[12px] bg-[#00ff88] font-semibold text-[#06120e] hover:bg-[#34ffa3]">Back to Dashboard</Button></div> : <><div className="mt-5 rounded-[20px] border border-[#00ff88]/55 bg-[#00ff88]/[.055] p-4 shadow-[0_0_30px_rgba(0,255,136,.07)]"><div className="flex items-start gap-3"><Link2 className="mt-0.5 size-5 shrink-0 text-[#00ff88]" /><div><h3 className="font-semibold">Direct Cancellation Link</h3><p className="mt-1 text-xs leading-4 text-[#9ca3af]">Skip the homepage and go straight to the cancel page</p></div></div><Button onClick={() => window.open('https://account.adobe.com/plan/cancel', '_blank', 'noopener,noreferrer')} className="mt-4 h-12 w-full rounded-[11px] bg-[#00ff88] text-sm font-semibold text-[#06120e] hover:bg-[#34ffa3]">Open Cancellation Page<ExternalLink data-icon="inline-end" /></Button><p className="mt-3 font-mono text-[10px] text-[#737984]">account.adobe.com/plan/cancel</p></div><h3 className="mt-6 text-base font-semibold">Or, send a cancellation email</h3><div className="mt-3 rounded-[18px] border border-white/[.09] bg-white/[.045] p-4"><p className="font-mono text-[11px] text-[#9ca3af]">To: billing@adobe.com</p><p className="mt-2 font-mono text-[11px] text-[#9ca3af]">Subject: Cancellation Request - Account #12345</p><pre className="mt-4 max-h-36 overflow-y-auto whitespace-pre-wrap rounded-xl bg-[#08080c] p-3 font-sans text-xs leading-5 text-[#d7dbe0]">{emailBody}</pre><Button onClick={openEmail} variant="outline" className="mt-3 h-11 w-full rounded-[10px] border-[#00ff88]/60 text-xs text-[#00ff88] hover:bg-[#00ff88]/10">{copied ? 'Copied!' : 'Copy Template & Open Email'}<Copy data-icon="inline-end" /></Button></div><label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-white/[.08] bg-white/[.03] p-3"><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} className="mt-0.5 size-4 accent-[#00ff88]" /><span><span className="block text-sm font-medium">I have successfully canceled Adobe Creative Cloud</span><span className="mt-1 block text-[11px] text-[#737984]">Checking this will remove Adobe from your Trial Quarantine</span></span></label></>}
+      </section>
+    </div>
+  )
+}
+
 function TrialQuarantineScreen() {
+  const [showEscapeRoute, setShowEscapeRoute] = useState(false)
+  const [removedAdobe, setRemovedAdobe] = useState(false)
   const trials = [
-    { name: 'Adobe Creative Cloud', logo: 'Ai', logoClass: 'bg-[#1473e6]', detail: 'Charges $54.99 in 14 hours!', timer: '14:32:08', tone: 'critical', action: 'Get Escape Route' },
+    ...(!removedAdobe ? [{ name: 'Adobe Creative Cloud', logo: 'Ai', logoClass: 'bg-[#1473e6]', detail: 'Charges $54.99 in 14 hours!', timer: '14:32:08', tone: 'critical', action: 'Get Escape Route' } as const] : []),
     { name: 'Amazon Prime', logo: 'a', logoClass: 'bg-[#ff9500]', detail: 'Charges $14.99 in 2 days', timer: '2d 08h', tone: 'warning', action: 'Get Escape Route' },
     { name: 'Hulu', logo: 'h', logoClass: 'bg-[#1ce783]', detail: 'Charges $7.99 in 6 days', timer: '6d 04h', tone: 'safe', action: 'Review trial' },
   ] as const
@@ -254,9 +282,10 @@ function TrialQuarantineScreen() {
       <section className="relative z-10 mx-auto flex w-full max-w-[390px] flex-col animate-rise">
         <div className="flex items-center justify-between"><div><p className="text-sm text-[#9ca3af]">Total at Risk</p><div className="mt-1 flex items-center gap-2"><h1 className="text-[38px] font-semibold tracking-[-0.06em]">$54.99</h1><span className="text-xl text-[#ff9500]" aria-label="Warning">!</span></div><p className="mt-1 text-sm text-[#9ca3af]">will be charged in the next 48 hours</p></div><div className="flex size-11 items-center justify-center rounded-full border border-[#ff9500]/25 bg-[#ff9500]/[0.1] text-xl text-[#ff9500]">!</div></div>
         <div className="mt-8 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]"><button className="shrink-0 rounded-full bg-[#ff3b30] px-4 py-2 text-xs font-semibold text-white shadow-[0_0_20px_rgba(255,59,48,.2)]">Critical (&lt; 24h)</button><button className="shrink-0 rounded-full bg-white/[0.08] px-4 py-2 text-xs text-[#b7bdc5]">Warning (1–3 days)</button><button className="shrink-0 rounded-full bg-white/[0.08] px-4 py-2 text-xs text-[#b7bdc5]">Safe (&gt; 3 days)</button></div>
-        <div className="mt-5 flex flex-col gap-3">{trials.map((trial) => { const critical = trial.tone === 'critical'; const warning = trial.tone === 'warning'; const accent = critical ? '#ff3b30' : warning ? '#ff9500' : '#00ff88'; return <article key={trial.name} className="relative overflow-hidden rounded-[20px] border border-white/[0.09] bg-[#1A1A24]/90 p-4 pl-5 shadow-[0_14px_45px_rgba(0,0,0,.22)] backdrop-blur-xl"><div className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: accent }} /><div className="flex items-start gap-3"><span className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${trial.logoClass} text-lg font-bold text-white shadow-lg`}>{trial.logo}</span><div className="min-w-0 flex-1"><h2 className="truncate text-sm font-semibold">{trial.name}</h2><p className="mt-1 text-xs font-semibold" style={{ color: accent }}>{trial.detail}</p><p className="mt-3 font-mono text-base font-semibold tracking-[0.08em]" style={{ color: accent }}>{trial.timer}</p><button className="mt-3 rounded-[10px] px-3 py-2 text-[11px] font-semibold text-white transition-transform active:scale-[.97]" style={{ backgroundColor: accent }}>{trial.action}</button></div></div></article> })}</div>
+        <div className="mt-5 flex flex-col gap-3">{trials.map((trial) => { const critical = trial.tone === 'critical'; const warning = trial.tone === 'warning'; const accent = critical ? '#ff3b30' : warning ? '#ff9500' : '#00ff88'; return <article key={trial.name} className="relative overflow-hidden rounded-[20px] border border-white/[0.09] bg-[#1A1A24]/90 p-4 pl-5 shadow-[0_14px_45px_rgba(0,0,0,.22)] backdrop-blur-xl"><div className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: accent }} /><div className="flex items-start gap-3"><span className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${trial.logoClass} text-lg font-bold text-white shadow-lg`}>{trial.logo}</span><div className="min-w-0 flex-1"><h2 className="truncate text-sm font-semibold">{trial.name}</h2><p className="mt-1 text-xs font-semibold" style={{ color: accent }}>{trial.detail}</p><p className="mt-3 font-mono text-base font-semibold tracking-[0.08em]" style={{ color: accent }}>{trial.timer}</p><button className="mt-3 rounded-[10px] px-3 py-2 text-[11px] font-semibold text-white transition-transform active:scale-[.97]" style={{ backgroundColor: accent }} onClick={() => trial.action === 'Get Escape Route' && setShowEscapeRoute(true)}>{trial.action}</button></div></div></article> })}</div>
         <p className="mt-6 text-center text-[11px] leading-4 text-[#737984]">SubShield watches the clock so you can stay ahead of unwanted charges.</p>
       </section>
+      {showEscapeRoute && <EscapeRouteModal onClose={() => setShowEscapeRoute(false)} onSaved={() => { setRemovedAdobe(true); setShowEscapeRoute(false) }} />}
     </main>
   )
 }
