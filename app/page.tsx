@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronRight,
-  Chrome,
   CircleDollarSign,
   Clipboard,
   Clock3,
@@ -81,7 +80,7 @@ export default function Page() {
 
 function LoginScreen({ onContinue }: { onContinue: () => void }) {
   return <main className="flex min-h-screen flex-col justify-center px-6 py-12">
-    <div className="mx-auto w-full max-w-[360px] text-center"><div className="mx-auto flex size-20 items-center justify-center rounded-[24px] border-2 border-[#2F5BFF] bg-[#E8ECFF] text-[#2F5BFF]"><ShieldCheck className="size-10" /><Mail className="-ml-3 size-5" /></div><h1 className="mt-7 text-[30px] font-bold leading-tight tracking-[-.04em]">Track your subscriptions.<br />Keep your bank data private.</h1><p className="mt-4 text-base text-[#6B7280]">No bank linking. No stress.</p><div className="mt-8 flex flex-col gap-3"><button onClick={onContinue} className="flex h-14 items-center justify-center gap-3 rounded-xl bg-[#2F5BFF] font-semibold text-white shadow-[0_8px_18px_rgba(47,91,255,.22)] transition hover:bg-[#244bd9]"><Mail className="size-5" />Continue with Email</button><button onClick={onContinue} className="flex h-14 items-center justify-center gap-3 rounded-xl border border-[#E5E9F2] bg-white font-semibold shadow-[0_4px_20px_rgba(18,26,43,.06)]"><Chrome className="size-5 text-[#4285F4]" />Continue with Google</button><button onClick={onContinue} className="flex h-14 items-center justify-center gap-3 rounded-xl border border-[#E5E9F2] bg-white font-semibold shadow-[0_4px_20px_rgba(18,26,43,.06)]"><Apple className="size-5" />Continue with Apple</button></div><p className="mt-7 flex items-center justify-center gap-2 text-xs text-[#6B7280]"><LockKeyhole className="size-4 text-[#12B886]" />We will NEVER ask for your bank password.</p></div>
+    <div className="mx-auto w-full max-w-[360px] text-center"><div className="mx-auto flex size-20 items-center justify-center rounded-[24px] border-2 border-[#2F5BFF] bg-[#E8ECFF] text-[#2F5BFF]"><ShieldCheck className="size-10" /><Mail className="-ml-3 size-5" /></div><h1 className="mt-7 text-[30px] font-bold leading-tight tracking-[-.04em]">Track your subscriptions.<br />Keep your bank data private.</h1><p className="mt-4 text-base text-[#6B7280]">No bank linking. No stress.</p><div className="mt-8 flex flex-col gap-3"><button onClick={onContinue} className="flex h-14 items-center justify-center gap-3 rounded-xl bg-[#2F5BFF] font-semibold text-white shadow-[0_8px_18px_rgba(47,91,255,.22)] transition hover:bg-[#244bd9]"><Mail className="size-5" />Continue with Email</button><button onClick={onContinue} className="flex h-14 items-center justify-center gap-3 rounded-xl border border-[#E5E9F2] bg-white font-semibold shadow-[0_4px_20px_rgba(18,26,43,.06)]"><span aria-hidden="true" className="flex size-5 items-center justify-center rounded-full text-sm font-bold text-[#4285F4]">G</span>Continue with Google</button><button onClick={onContinue} className="flex h-14 items-center justify-center gap-3 rounded-xl border border-[#E5E9F2] bg-white font-semibold shadow-[0_4px_20px_rgba(18,26,43,.06)]"><Apple className="size-5" />Continue with Apple</button></div><p className="mt-7 flex items-center justify-center gap-2 text-xs text-[#6B7280]"><LockKeyhole className="size-4 text-[#12B886]" />We will NEVER ask for your bank password.</p></div>
   </main>
 }
 
