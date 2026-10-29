@@ -55,12 +55,18 @@ export default function Page() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [toast, setToast] = useState('')
 
+  useEffect(() => {
+    document.body.style.backgroundColor = theme === 'dark' ? '#0A0E1A' : '#F5F7FB'
+    document.body.style.color = theme === 'dark' ? '#FFFFFF' : '#121A2B'
+    return () => { document.body.style.backgroundColor = ''; document.body.style.color = '' }
+  }, [theme])
+
   const notify = (message: string) => { setToast(message); window.setTimeout(() => setToast(''), 2400) }
   const go = (screen: Screen) => setCurrentScreen(screen)
   const openDashboard = () => go(subscriptions.length ? 'dashboard' : 'empty-dashboard')
 
   return <div className={`${theme === 'dark' ? 'theme-dark' : 'theme-light'} min-h-screen font-sans text-[#121A2B] transition-colors duration-300`}>
-    <style>{`.theme-dark { background:#0A0E1A; color:#fff; } .theme-dark .bg\\[\\#F5F7FB\\] { background:#0A0E1A !important; } .theme-dark .bg-white { background:#151B2E !important; } .theme-dark .bg\\[\\#E8ECFF\\] { background:#1E2A4A !important; } .theme-dark .text\\[\\#121A2B\\] { color:#fff !important; } .theme-dark .text\\[\\#6B7280\\] { color:#9CA3AF !important; } .theme-dark .border\\[\\#E5E9F2\\] { border-color:#2A3348 !important; } .theme-dark .shadow-\\[0_4px_20px_rgba\\(18\\,26\\,43\\,\\.06\\)\\] { box-shadow:0 4px 20px rgba(0,0,0,.25) !important; } .theme-dark input,.theme-dark textarea { background:#151B2E !important; color:#fff !important; border-color:#2A3348 !important; } .theme-dark .theme-surface { background:#151B2E !important; }`}</style>
+    <style>{`.theme-dark, .theme-dark > div { background:#0A0E1A !important; color:#fff !important; color-scheme:dark; } .theme-dark [class~="bg-white"], .theme-dark [class*="bg-white/"] { background:#151B2E !important; } .theme-dark [class*="bg-[#F5F7FB]"] { background:#0A0E1A !important; } .theme-dark [class*="bg-[#E8ECFF]"] { background:#1E2A4A !important; } .theme-dark [class*="text-[#121A2B]"] { color:#fff !important; } .theme-dark [class*="text-[#374151]"] { color:#D8DEE9 !important; } .theme-dark [class*="text-[#6B7280]"] { color:#9CA3AF !important; } .theme-dark [class*="border-[#E5E9F2]"] { border-color:#2A3348 !important; } .theme-dark input, .theme-dark textarea { background:#151B2E !important; color:#fff !important; border-color:#2A3348 !important; } .theme-dark .bg\\[\\#F5F7FB\\] { background:#0A0E1A !important; } .theme-dark .bg-white { background:#151B2E !important; } .theme-dark .bg\\[\\#E8ECFF\\] { background:#1E2A4A !important; } .theme-dark .text\\[\\#121A2B\\] { color:#fff !important; } .theme-dark .text\\[\\#6B7280\\] { color:#9CA3AF !important; } .theme-dark .border\\[\\#E5E9F2\\] { border-color:#2A3348 !important; } .theme-dark .shadow-\\[0_4px_20px_rgba\\(18\\,26\\,43\\,\\.06\\)\\] { box-shadow:0 4px 20px rgba(0,0,0,.25) !important; } .theme-dark input,.theme-dark textarea { background:#151B2E !important; color:#fff !important; border-color:#2A3348 !important; } .theme-dark .theme-surface { background:#151B2E !important; }`}</style>
     <div className="mx-auto min-h-screen w-full max-w-[430px] bg-[#F5F7FB] shadow-[0_0_60px_rgba(18,26,43,.08)] transition-colors duration-300">
       {currentScreen === 'login' && <LoginScreen onContinue={() => go('empty-dashboard')} />}
       {currentScreen === 'empty-dashboard' && <EmptyDashboard onAlias={() => go('alias-reveal')} onManual={() => setShowAddModal(true)} onSettings={() => go('settings')} />}
