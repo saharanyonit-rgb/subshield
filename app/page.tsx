@@ -4,17 +4,21 @@ import { useEffect, useState } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
-  Check,
   ChevronRight,
   Copy,
   ExternalLink,
   Inbox,
   LayoutDashboard,
   Link2,
+  CalendarDays,
+  Check,
+  CircleDollarSign,
   LockKeyhole,
   Mail,
   Plus,
   ReceiptText,
+  Search,
+  X,
   ScanFace,
   Send,
   Settings,
@@ -290,9 +294,49 @@ function TrialQuarantineScreen() {
   )
 }
 
+function ManualAddModal({ onClose }: { onClose: () => void }) {
+  const [service, setService] = useState('')
+  const [price, setPrice] = useState('')
+  const [frequency, setFrequency] = useState<'Monthly' | 'Yearly' | 'Weekly'>('Monthly')
+  const [date, setDate] = useState(() => { const next = new Date(); next.setDate(next.getDate() + 30); return next.toISOString().slice(0, 10) })
+  const [notes, setNotes] = useState('')
+  const [errors, setErrors] = useState<{ service?: string; price?: string; date?: string }>({})
+  const [saved, setSaved] = useState(false)
+  const suggestions = ['Netflix', 'Spotify', 'Adobe', 'Amazon', 'Apple', 'YouTube']
+
+  const submit = () => {
+    const nextErrors: typeof errors = {}
+    if (!service.trim()) nextErrors.service = 'Enter a service name.'
+    if (!price || Number.isNaN(Number(price)) || Number(price) <= 0) nextErrors.price = 'Enter a valid price.'
+    if (!date) nextErrors.date = 'Choose a billing date.'
+    setErrors(nextErrors)
+    if (Object.keys(nextErrors).length) return
+    setSaved(true)
+    window.setTimeout(onClose, 900)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 px-0 backdrop-blur-[6px]" role="dialog" aria-modal="true" aria-labelledby="manual-add-title">
+      <section className="max-h-[88svh] w-full max-w-[430px] overflow-y-auto rounded-t-[26px] border border-white/10 bg-[#12121a] px-5 pb-8 pt-5 text-white shadow-[0_-18px_80px_rgba(0,0,0,.6)] animate-sheet-up">
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
+        <div className="relative text-center"><button onClick={onClose} aria-label="Close add subscription modal" className="absolute right-0 top-0 flex size-9 items-center justify-center rounded-full bg-white/[.08] text-[#d7dbe0] hover:bg-white/[.14]"><X className="size-4" /></button><h2 id="manual-add-title" className="pr-8 text-[21px] font-semibold tracking-[-.035em]">Add Subscription Manually</h2><p className="mt-1 text-sm text-[#9ca3af]">Or forward receipts to your private alias</p></div>
+        {saved ? <div className="flex min-h-[430px] flex-col items-center justify-center text-center animate-rise"><div className="flex size-20 items-center justify-center rounded-full bg-[#00ff88]/15 text-[#00ff88] shadow-[0_0_40px_rgba(0,255,136,.18)]"><Check className="size-10" strokeWidth={2.5} /></div><h3 className="mt-5 text-2xl font-semibold text-[#00ff88]">Subscription added</h3><p className="mt-2 text-sm text-[#9ca3af]">{service} is now in your tracker.</p></div> : <div className="mt-7 flex flex-col gap-5">
+          <label className="flex flex-col gap-2 text-xs font-medium text-[#d7dbe0]">Service Name<div className="flex h-12 items-center gap-3 rounded-[10px] border border-white/10 bg-[#1A1A24] px-3 focus-within:border-[#00ff88]/60"><Search className="size-4 text-[#737984]" /><input value={service} onChange={(event) => setService(event.target.value)} placeholder="e.g., Netflix, Spotify, Adobe" className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-[#737984]" /></div>{errors.service && <span className="text-[11px] text-[#ff6b63]">{errors.service}</span>}<div className="flex flex-wrap gap-2">{suggestions.map((suggestion) => <button type="button" key={suggestion} onClick={() => setService(suggestion)} className="rounded-full border border-white/10 bg-white/[.05] px-3 py-1.5 text-[11px] text-[#b7bdc5] transition-colors hover:border-[#00ff88]/50 hover:text-[#00ff88]">{suggestion}</button>)}</div></label>
+          <label className="flex flex-col gap-2 text-xs font-medium text-[#d7dbe0]">Monthly Price<div className="flex h-12 items-center gap-3 rounded-[10px] border border-white/10 bg-[#1A1A24] px-3 focus-within:border-[#00ff88]/60"><CircleDollarSign className="size-4 text-[#737984]" /><input inputMode="decimal" value={price} onChange={(event) => setPrice(event.target.value)} placeholder="$0.00" className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-[#737984]" /></div>{errors.price && <span className="text-[11px] text-[#ff6b63]">{errors.price}</span>}</label>
+          <fieldset className="flex flex-col gap-2"><legend className="text-xs font-medium text-[#d7dbe0]">Billing Frequency</legend><div className="grid grid-cols-3 gap-2">{(['Monthly', 'Yearly', 'Weekly'] as const).map((option) => <button type="button" key={option} onClick={() => setFrequency(option)} className={`rounded-full px-3 py-2 text-xs font-medium transition-colors ${frequency === option ? 'bg-[#00ff88] text-[#06120e]' : 'bg-white/[.08] text-[#9ca3af] hover:bg-white/[.14]'}`}>{option}</button>)}</div>{frequency === 'Yearly' && <p className="text-[11px] text-[#9ca3af]">We&apos;ll calculate the monthly cost for you.</p>}</fieldset>
+          <label className="flex flex-col gap-2 text-xs font-medium text-[#d7dbe0]">Next Billing Date<div className="relative"><input type="date" value={date} onChange={(event) => setDate(event.target.value)} className="h-12 w-full rounded-[10px] border border-white/10 bg-[#1A1A24] px-3 text-sm text-white outline-none focus:border-[#00ff88]/60" /><CalendarDays className="pointer-events-none absolute right-3 top-3 size-5 text-[#00ff88]" /></div>{errors.date && <span className="text-[11px] text-[#ff6b63]">{errors.date}</span>}</label>
+          <label className="flex flex-col gap-2 text-xs font-medium text-[#d7dbe0]">Notes (Optional)<textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="e.g., Family plan, shared with roommate" rows={2} className="resize-none rounded-[10px] border border-white/10 bg-[#1A1A24] px-3 py-3 text-sm text-white outline-none placeholder:text-[#737984] focus:border-[#00ff88]/60" /></label>
+          <Button type="button" onClick={submit} className="h-14 rounded-[12px] bg-[#00ff88] text-sm font-semibold text-[#06120e] hover:bg-[#34ffa3] active:scale-[.985]">Add Subscription</Button><p className="-mt-2 text-center text-[11px] text-[#737984]">We&apos;ll track this and alert you before it renews</p>
+        </div>}
+      </section>
+    </div>
+  )
+}
+
 function ConnectedDashboardScreen() {
+  const [showAddModal, setShowAddModal] = useState(false)
   const subscriptions = [{ name: 'Netflix', detail: 'Next bill: Nov 12', price: '$15.99', icon: 'N', color: 'bg-[#e50914]' }, { name: 'Spotify', detail: 'Next bill: Nov 15', price: '$10.99', icon: '♪', color: 'bg-[#1ed760]' }, { name: 'Adobe Creative Cloud', detail: 'Trial ends in 2 days!', price: '$54.99', icon: 'Ai', color: 'bg-[#1473e6]' }]
-  return <main className="relative min-h-[100svh] overflow-hidden bg-[#0A0A0F] px-5 pb-24 pt-10 text-white"><div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-[-220px] size-[460px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#00ff88]/[0.06] blur-[110px]" /><section className="relative z-10 mx-auto flex w-full max-w-[390px] flex-col animate-rise"><p className="text-sm text-[#9ca3af]">Total Monthly Spend</p><div className="mt-1 flex items-end justify-between gap-3"><h1 className="text-[32px] font-semibold tracking-[-0.05em]">$26.98 <span className="text-lg font-normal text-[#737984]">/ month</span></h1><span className="rounded-full bg-[#00ff88]/[0.12] px-2.5 py-1 text-[10px] font-semibold text-[#00ff88]">↓ $12 saved this month</span></div><div className="mt-7 rounded-[14px] border border-[#00ff88]/20 bg-[#00ff88]/[0.09] px-4 py-3 text-sm text-[#b9ffd9]">✓ Netflix receipt synced successfully.</div><div className="mt-5 flex flex-col gap-3">{subscriptions.map((subscription, index) => <article key={subscription.name} className={index === 2 ? 'rounded-[20px] border border-[#00ff88]/70 bg-white/[0.045] p-4' : 'rounded-[20px] border border-white/[0.09] bg-white/[0.045] p-4'}><div className="flex items-center gap-3"><span className={`flex size-11 items-center justify-center rounded-xl ${subscription.color} text-lg font-bold text-white`}>{subscription.icon}</span><div className="min-w-0 flex-1"><h2 className="truncate text-sm font-semibold">{subscription.name}</h2><p className={index === 2 ? 'mt-1 text-xs text-orange-300' : 'mt-1 text-xs text-[#9ca3af]'}>{subscription.detail}</p></div><div className="text-right"><p className="text-sm font-semibold">{subscription.price}</p><p className="mt-1 text-[10px] text-[#00ff88]">{index === 2 ? 'Free Trial' : 'Active'}</p></div></div></article>)}</div></section><button aria-label="Add subscription" className="fixed bottom-20 right-5 z-20 flex size-14 items-center justify-center rounded-full bg-[#00ff88] text-[#06120e] shadow-[0_0_28px_rgba(0,255,136,.3)] transition-transform hover:scale-105 active:scale-95"><Plus className="size-6" /></button><nav aria-label="Main navigation" className="fixed inset-x-0 bottom-0 z-20 border-t border-white/[0.08] bg-[#0A0A0F]/90 px-8 py-4 backdrop-blur-xl"><div className="mx-auto flex max-w-[390px] items-center justify-between"><button className="flex flex-col items-center gap-1 text-[10px] text-[#00ff88]"><LayoutDashboard className="size-5" /><span>Dashboard</span></button><button className="flex flex-col items-center gap-1 text-[10px] text-[#737984]"><ReceiptText className="size-5" /><span>Trials</span></button><button className="flex flex-col items-center gap-1 text-[10px] text-[#737984]"><Settings className="size-5" /><span>Settings</span></button></div></nav></main>
+  return <> <main className="relative min-h-[100svh] overflow-hidden bg-[#0A0A0F] px-5 pb-24 pt-10 text-white"><div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-[-220px] size-[460px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#00ff88]/[0.06] blur-[110px]" /><section className="relative z-10 mx-auto flex w-full max-w-[390px] flex-col animate-rise"><p className="text-sm text-[#9ca3af]">Total Monthly Spend</p><div className="mt-1 flex items-end justify-between gap-3"><h1 className="text-[32px] font-semibold tracking-[-0.05em]">$26.98 <span className="text-lg font-normal text-[#737984]">/ month</span></h1><span className="rounded-full bg-[#00ff88]/[0.12] px-2.5 py-1 text-[10px] font-semibold text-[#00ff88]">↓ $12 saved this month</span></div><div className="mt-7 rounded-[14px] border border-[#00ff88]/20 bg-[#00ff88]/[0.09] px-4 py-3 text-sm text-[#b9ffd9]">✓ Netflix receipt synced successfully.</div><div className="mt-5 flex flex-col gap-3">{subscriptions.map((subscription, index) => <article key={subscription.name} className={index === 2 ? 'rounded-[20px] border border-[#00ff88]/70 bg-white/[0.045] p-4' : 'rounded-[20px] border border-white/[0.09] bg-white/[0.045] p-4'}><div className="flex items-center gap-3"><span className={`flex size-11 items-center justify-center rounded-xl ${subscription.color} text-lg font-bold text-white`}>{subscription.icon}</span><div className="min-w-0 flex-1"><h2 className="truncate text-sm font-semibold">{subscription.name}</h2><p className={index === 2 ? 'mt-1 text-xs text-orange-300' : 'mt-1 text-xs text-[#9ca3af]'}>{subscription.detail}</p></div><div className="text-right"><p className="text-sm font-semibold">{subscription.price}</p><p className="mt-1 text-[10px] text-[#00ff88]">{index === 2 ? 'Free Trial' : 'Active'}</p></div></div></article>)}</div></section><button aria-label="Add subscription" onClick={() => setShowAddModal(true)} className="fixed bottom-20 right-5 z-20 flex size-14 items-center justify-center rounded-full bg-[#00ff88] text-[#06120e] shadow-[0_0_28px_rgba(0,255,136,.3)] transition-transform hover:scale-105 active:scale-95"><Plus className="size-6" /></button><nav aria-label="Main navigation" className="fixed inset-x-0 bottom-0 z-20 border-t border-white/[0.08] bg-[#0A0A0F]/90 px-8 py-4 backdrop-blur-xl"><div className="mx-auto flex max-w-[390px] items-center justify-between"><button className="flex flex-col items-center gap-1 text-[10px] text-[#00ff88]"><LayoutDashboard className="size-5" /><span>Dashboard</span></button><button className="flex flex-col items-center gap-1 text-[10px] text-[#737984]"><ReceiptText className="size-5" /><span>Trials</span></button><button className="flex flex-col items-center gap-1 text-[10px] text-[#737984]"><Settings className="size-5" /><span>Settings</span></button></div></nav></main>{showAddModal && <ManualAddModal onClose={() => setShowAddModal(false)} />}</>
 }
 
 export default function Page() {
@@ -300,6 +344,6 @@ export default function Page() {
   if (screen === 'email') return <EmailScreen onBack={() => setScreen('login')} onContinue={() => setScreen('alias')} />
   if (screen === 'alias') return <AliasScreen onOpenEmail={() => setScreen('processing')} onLater={() => setScreen('dashboard')} />
   if (screen === 'processing') return <LiveProcessingScreen onDashboard={() => setScreen('dashboard')} />
-  if (screen === 'dashboard') return <TrialQuarantineScreen />
+  if (screen === 'dashboard') return <ConnectedDashboardScreen />
   return <LoginScreen onEmail={() => setScreen('email')} />
 }
