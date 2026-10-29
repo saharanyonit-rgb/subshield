@@ -271,19 +271,61 @@ function EscapeRouteModal({ onClose, onSaved }: { onClose: () => void; onSaved: 
   )
 }
 
-function TrialQuarantineScreen() {
+function AllClearState({ onTrackNew, onDashboard, onShowTrials }: { onTrackNew: () => void; onDashboard: () => void; onShowTrials: () => void }) {
+  const [copied, setCopied] = useState(false)
+  const [saved, setSaved] = useState(127.97)
+
+  useEffect(() => {
+    let frame = 0
+    const started = performance.now()
+    const tick = (now: number) => {
+      const progress = Math.min((now - started) / 900, 1)
+      setSaved(127.97 * (1 - Math.pow(1 - progress, 3)))
+      if (progress < 1) frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
+  const copyAlias = async () => {
+    await navigator.clipboard?.writeText('alex.trials@subshield.app')
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 1800)
+  }
+
+  return (
+    <main className="relative min-h-[100svh] overflow-hidden bg-[#0A0A0F] px-5 pb-28 pt-8 text-white">
+      <section className="relative z-10 mx-auto flex w-full max-w-[390px] flex-col animate-rise">
+        <div className="flex items-start justify-between"><div><p className="text-sm text-[#9ca3af]">Total at Risk</p><h1 className="mt-1 text-[38px] font-semibold tracking-[-.06em] text-[#00ff88]">$0.00</h1><p className="mt-1 text-sm text-[#9ca3af]">No charges coming up. You&apos;re safe!</p></div><label className="flex cursor-pointer flex-col items-end gap-1 text-[10px] text-[#737984]"><span>Demo: Show Empty State</span><input type="checkbox" checked aria-label="Demo: Show Empty State" onChange={onShowTrials} className="sr-only peer" /><span className="relative h-5 w-9 rounded-full bg-[#00ff88] after:absolute after:right-0.5 after:top-0.5 after:size-4 after:rounded-full after:bg-[#06120e] after:transition-all" /></label></div>
+        <div className="mt-7 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]"><button className="shrink-0 rounded-full bg-white/[0.08] px-4 py-2 text-xs text-[#9ca3af]">Critical</button><button className="shrink-0 rounded-full bg-white/[0.08] px-4 py-2 text-xs text-[#9ca3af]">Warning</button><button className="shrink-0 rounded-full bg-white/[0.08] px-4 py-2 text-xs text-[#9ca3af]">Safe</button></div>
+        <div className="mt-9 flex flex-col items-center text-center"><div className="flex size-28 items-center justify-center rounded-full border border-[#00ff88]/30 bg-[#00ff88]/[0.08] text-[#00ff88] shadow-[0_0_55px_rgba(0,255,136,.2)] animate-pulse-soft"><ShieldCheck className="size-16" strokeWidth={1.5} /></div><h2 className="mt-7 text-[29px] font-semibold tracking-[-.05em]">You&apos;re all clear!</h2><p className="mt-3 max-w-[330px] text-sm leading-5 text-[#9ca3af]">No free trials ending soon. Enjoy your peace of mind.</p><p className="mt-2 text-xs text-[#737984]">We&apos;ll keep watching and alert you if anything changes.</p></div>
+        <div className="mt-8 rounded-[20px] border border-white/[.09] bg-white/[.045] p-4 backdrop-blur-xl"><div className="flex items-center gap-3"><span className="text-xl">$</span><h3 className="text-sm font-semibold">Total Saved This Month</h3></div><p className="mt-3 text-[32px] font-semibold tracking-[-.05em] text-[#00ff88]">${saved.toFixed(2)}</p><p className="mt-1 text-xs text-[#9ca3af]">From 3 canceled trials</p><p className="mt-3 text-xs text-[#737984]">Keep it up! You&apos;re doing great.</p></div>
+        <button onClick={onTrackNew} className="mt-6 h-14 w-full rounded-[12px] bg-[#00ff88] text-sm font-semibold text-[#06120e] transition-transform hover:bg-[#34ffa3] active:scale-[.985]">Track a New Trial</button><button onClick={onDashboard} className="mt-4 text-sm text-[#737984] underline underline-offset-4 hover:text-white">Or go back to Dashboard</button>
+        <div className="mt-7 rounded-[18px] border border-white/[.09] bg-white/[.045] p-4"><div className="flex items-start gap-3"><span className="text-lg">i</span><p className="text-xs leading-5 text-[#9ca3af]">Pro tip: Forward your trial confirmation emails to your private alias, and we&apos;ll automatically track them here.</p></div><button onClick={copyAlias} className="mt-3 text-xs font-semibold text-[#00ff88]">{copied ? 'Alias copied!' : 'Copy My Alias'}</button></div>
+      </section>
+      <nav aria-label="Main navigation" className="fixed inset-x-0 bottom-0 z-20 border-t border-white/[.08] bg-[#0A0A0F]/90 px-8 py-4 backdrop-blur-xl"><div className="mx-auto flex max-w-[390px] items-center justify-between"><button onClick={onDashboard} className="flex flex-col items-center gap-1 text-[10px] text-[#737984]"><LayoutDashboard className="size-5" /><span>Dashboard</span></button><button className="flex flex-col items-center gap-1 text-[10px] text-[#00ff88]"><ReceiptText className="size-5" /><span>Trials</span></button><button className="flex flex-col items-center gap-1 text-[10px] text-[#737984]"><Settings className="size-5" /><span>Settings</span></button></div></nav>
+    </main>
+  )
+}
+
+function TrialQuarantineScreen({ onDashboard, onTrackNew }: { onDashboard: () => void; onTrackNew: () => void }) {
+  const [hasActiveTrials, setHasActiveTrials] = useState(true)
   const [showEscapeRoute, setShowEscapeRoute] = useState(false)
   const [removedAdobe, setRemovedAdobe] = useState(false)
+  const [showAddModal, setShowAddModal] = useState(false)
   const trials = [
     ...(!removedAdobe ? [{ name: 'Adobe Creative Cloud', logo: 'Ai', logoClass: 'bg-[#1473e6]', detail: 'Charges $54.99 in 14 hours!', timer: '14:32:08', tone: 'critical', action: 'Get Escape Route' } as const] : []),
     { name: 'Amazon Prime', logo: 'a', logoClass: 'bg-[#ff9500]', detail: 'Charges $14.99 in 2 days', timer: '2d 08h', tone: 'warning', action: 'Get Escape Route' },
     { name: 'Hulu', logo: 'h', logoClass: 'bg-[#1ce783]', detail: 'Charges $7.99 in 6 days', timer: '6d 04h', tone: 'safe', action: 'Review trial' },
   ] as const
 
+  if (!hasActiveTrials) return <><AllClearState onTrackNew={() => setShowAddModal(true)} onDashboard={onDashboard} onShowTrials={() => setHasActiveTrials(true)} />{showAddModal && <ManualAddModal onClose={() => setShowAddModal(false)} />}</>
+
   return (
     <main className="relative min-h-[100svh] overflow-hidden bg-[#0A0A0F] px-5 pb-10 pt-10 text-white">
       <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-[-180px] size-[440px] -translate-x-1/2 rounded-full bg-[#ff3b30]/[0.055] blur-[115px]" />
       <section className="relative z-10 mx-auto flex w-full max-w-[390px] flex-col animate-rise">
+        <button onClick={() => setHasActiveTrials(false)} className="mb-4 self-end text-[10px] text-[#737984] underline underline-offset-2 hover:text-[#00ff88]">Demo: Show Empty State</button>
         <div className="flex items-center justify-between"><div><p className="text-sm text-[#9ca3af]">Total at Risk</p><div className="mt-1 flex items-center gap-2"><h1 className="text-[38px] font-semibold tracking-[-0.06em]">$54.99</h1><span className="text-xl text-[#ff9500]" aria-label="Warning">!</span></div><p className="mt-1 text-sm text-[#9ca3af]">will be charged in the next 48 hours</p></div><div className="flex size-11 items-center justify-center rounded-full border border-[#ff9500]/25 bg-[#ff9500]/[0.1] text-xl text-[#ff9500]">!</div></div>
         <div className="mt-8 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]"><button className="shrink-0 rounded-full bg-[#ff3b30] px-4 py-2 text-xs font-semibold text-white shadow-[0_0_20px_rgba(255,59,48,.2)]">Critical (&lt; 24h)</button><button className="shrink-0 rounded-full bg-white/[0.08] px-4 py-2 text-xs text-[#b7bdc5]">Warning (1–3 days)</button><button className="shrink-0 rounded-full bg-white/[0.08] px-4 py-2 text-xs text-[#b7bdc5]">Safe (&gt; 3 days)</button></div>
         <div className="mt-5 flex flex-col gap-3">{trials.map((trial) => { const critical = trial.tone === 'critical'; const warning = trial.tone === 'warning'; const accent = critical ? '#ff3b30' : warning ? '#ff9500' : '#00ff88'; return <article key={trial.name} className="relative overflow-hidden rounded-[20px] border border-white/[0.09] bg-[#1A1A24]/90 p-4 pl-5 shadow-[0_14px_45px_rgba(0,0,0,.22)] backdrop-blur-xl"><div className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: accent }} /><div className="flex items-start gap-3"><span className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${trial.logoClass} text-lg font-bold text-white shadow-lg`}>{trial.logo}</span><div className="min-w-0 flex-1"><h2 className="truncate text-sm font-semibold">{trial.name}</h2><p className="mt-1 text-xs font-semibold" style={{ color: accent }}>{trial.detail}</p><p className="mt-3 font-mono text-base font-semibold tracking-[0.08em]" style={{ color: accent }}>{trial.timer}</p><button className="mt-3 rounded-[10px] px-3 py-2 text-[11px] font-semibold text-white transition-transform active:scale-[.97]" style={{ backgroundColor: accent }} onClick={() => trial.action === 'Get Escape Route' && setShowEscapeRoute(true)}>{trial.action}</button></div></div></article> })}</div>
@@ -344,6 +386,6 @@ export default function Page() {
   if (screen === 'email') return <EmailScreen onBack={() => setScreen('login')} onContinue={() => setScreen('alias')} />
   if (screen === 'alias') return <AliasScreen onOpenEmail={() => setScreen('processing')} onLater={() => setScreen('dashboard')} />
   if (screen === 'processing') return <LiveProcessingScreen onDashboard={() => setScreen('dashboard')} />
-  if (screen === 'dashboard') return <ConnectedDashboardScreen />
+  if (screen === 'dashboard') return <TrialQuarantineScreen onDashboard={() => setScreen('dashboard')} onTrackNew={() => setScreen('dashboard')} />
   return <LoginScreen onEmail={() => setScreen('email')} />
 }
