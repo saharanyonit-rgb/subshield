@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
@@ -296,19 +296,19 @@ function AllClearState({ onTrackNew, onDashboard, onShowTrials }: { onTrackNew: 
   return (
     <main className="relative min-h-[100svh] overflow-hidden bg-[#0A0A0F] px-5 pb-28 pt-8 text-white">
       <section className="relative z-10 mx-auto flex w-full max-w-[390px] flex-col animate-rise">
-        <div className="flex items-start justify-between"><div><p className="text-sm text-[#9ca3af]">Total at Risk</p><h1 className="mt-1 text-[38px] font-semibold tracking-[-.06em] text-[#00ff88]">$0.00</h1><p className="mt-1 text-sm text-[#9ca3af]">No charges coming up. You&apos;re safe!</p></div><label className="flex cursor-pointer flex-col items-end gap-1 text-[10px] text-[#737984]"><span>Demo: Show Empty State</span><input type="checkbox" checked aria-label="Demo: Show Empty State" onChange={onShowTrials} className="sr-only peer" /><span className="relative h-5 w-9 rounded-full bg-[#00ff88] after:absolute after:right-0.5 after:top-0.5 after:size-4 after:rounded-full after:bg-[#06120e] after:transition-all" /></label></div>
+        <div className="flex items-start justify-between"><div><p className="text-sm text-[#9ca3af]">Total at Risk</p><h1 className="mt-1 text-[38px] font-semibold tracking-[-.06em] text-[#00ff88]">$0.00</h1><p className="mt-1 text-sm text-[#9ca3af]">No charges coming up. You&apos;re safe!</p></div><div className="flex items-end gap-3"><button onClick={onSettings} className="flex items-center gap-1 text-[11px] text-[#00ff88]"><Settings className="size-4" />Settings</button><label className="flex cursor-pointer flex-col items-end gap-1 text-[10px] text-[#737984]"><span>Demo: Show Empty State</span><input type="checkbox" checked aria-label="Demo: Show Empty State" onChange={onShowTrials} className="sr-only peer" /><span className="relative h-5 w-9 rounded-full bg-[#00ff88] after:absolute after:right-0.5 after:top-0.5 after:size-4 after:rounded-full after:bg-[#06120e] after:transition-all" /></label></div></div>
         <div className="mt-7 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]"><button className="shrink-0 rounded-full bg-white/[0.08] px-4 py-2 text-xs text-[#9ca3af]">Critical</button><button className="shrink-0 rounded-full bg-white/[0.08] px-4 py-2 text-xs text-[#9ca3af]">Warning</button><button className="shrink-0 rounded-full bg-white/[0.08] px-4 py-2 text-xs text-[#9ca3af]">Safe</button></div>
         <div className="mt-9 flex flex-col items-center text-center"><div className="flex size-28 items-center justify-center rounded-full border border-[#00ff88]/30 bg-[#00ff88]/[0.08] text-[#00ff88] shadow-[0_0_55px_rgba(0,255,136,.2)] animate-pulse-soft"><ShieldCheck className="size-16" strokeWidth={1.5} /></div><h2 className="mt-7 text-[29px] font-semibold tracking-[-.05em]">You&apos;re all clear!</h2><p className="mt-3 max-w-[330px] text-sm leading-5 text-[#9ca3af]">No free trials ending soon. Enjoy your peace of mind.</p><p className="mt-2 text-xs text-[#737984]">We&apos;ll keep watching and alert you if anything changes.</p></div>
         <div className="mt-8 rounded-[20px] border border-white/[.09] bg-white/[.045] p-4 backdrop-blur-xl"><div className="flex items-center gap-3"><span className="text-xl">$</span><h3 className="text-sm font-semibold">Total Saved This Month</h3></div><p className="mt-3 text-[32px] font-semibold tracking-[-.05em] text-[#00ff88]">${saved.toFixed(2)}</p><p className="mt-1 text-xs text-[#9ca3af]">From 3 canceled trials</p><p className="mt-3 text-xs text-[#737984]">Keep it up! You&apos;re doing great.</p></div>
         <button onClick={onTrackNew} className="mt-6 h-14 w-full rounded-[12px] bg-[#00ff88] text-sm font-semibold text-[#06120e] transition-transform hover:bg-[#34ffa3] active:scale-[.985]">Track a New Trial</button><button onClick={onDashboard} className="mt-4 text-sm text-[#737984] underline underline-offset-4 hover:text-white">Or go back to Dashboard</button>
         <div className="mt-7 rounded-[18px] border border-white/[.09] bg-white/[.045] p-4"><div className="flex items-start gap-3"><span className="text-lg">i</span><p className="text-xs leading-5 text-[#9ca3af]">Pro tip: Forward your trial confirmation emails to your private alias, and we&apos;ll automatically track them here.</p></div><button onClick={copyAlias} className="mt-3 text-xs font-semibold text-[#00ff88]">{copied ? 'Alias copied!' : 'Copy My Alias'}</button></div>
       </section>
-      <nav aria-label="Main navigation" className="fixed inset-x-0 bottom-0 z-20 border-t border-white/[.08] bg-[#0A0A0F]/90 px-8 py-4 backdrop-blur-xl"><div className="mx-auto flex max-w-[390px] items-center justify-between"><button onClick={onDashboard} className="flex flex-col items-center gap-1 text-[10px] text-[#737984]"><LayoutDashboard className="size-5" /><span>Dashboard</span></button><button className="flex flex-col items-center gap-1 text-[10px] text-[#00ff88]"><ReceiptText className="size-5" /><span>Trials</span></button><button className="flex flex-col items-center gap-1 text-[10px] text-[#737984]"><Settings className="size-5" /><span>Settings</span></button></div></nav>
+      <nav aria-label="Main navigation" className="fixed inset-x-0 bottom-0 z-20 border-t border-white/[.08] bg-[#0A0A0F]/90 px-8 py-4 backdrop-blur-xl"><div className="mx-auto flex max-w-[390px] items-center justify-between"><button onClick={onDashboard} className="flex flex-col items-center gap-1 text-[10px] text-[#737984]"><LayoutDashboard className="size-5" /><span>Dashboard</span></button><button className="flex flex-col items-center gap-1 text-[10px] text-[#00ff88]"><ReceiptText className="size-5" /><span>Trials</span></button><button onClick={onSettings} className="flex flex-col items-center gap-1 text-[10px] text-[#737984]"><Settings className="size-5" /><span>Settings</span></button></div></nav>
     </main>
   )
 }
 
-function TrialQuarantineScreen({ onDashboard, onTrackNew }: { onDashboard: () => void; onTrackNew: () => void }) {
+function TrialQuarantineScreen({ onDashboard, onTrackNew, onSettings }: { onDashboard: () => void; onTrackNew: () => void; onSettings: () => void }) {
   const [hasActiveTrials, setHasActiveTrials] = useState(true)
   const [showEscapeRoute, setShowEscapeRoute] = useState(false)
   const [removedAdobe, setRemovedAdobe] = useState(false)
@@ -375,17 +375,118 @@ function ManualAddModal({ onClose }: { onClose: () => void }) {
   )
 }
 
-function ConnectedDashboardScreen() {
+function ConnectedDashboardScreen({ onSettings }: { onSettings: () => void }) {
   const [showAddModal, setShowAddModal] = useState(false)
   const subscriptions = [{ name: 'Netflix', detail: 'Next bill: Nov 12', price: '$15.99', icon: 'N', color: 'bg-[#e50914]' }, { name: 'Spotify', detail: 'Next bill: Nov 15', price: '$10.99', icon: '♪', color: 'bg-[#1ed760]' }, { name: 'Adobe Creative Cloud', detail: 'Trial ends in 2 days!', price: '$54.99', icon: 'Ai', color: 'bg-[#1473e6]' }]
-  return <> <main className="relative min-h-[100svh] overflow-hidden bg-[#0A0A0F] px-5 pb-24 pt-10 text-white"><div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-[-220px] size-[460px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#00ff88]/[0.06] blur-[110px]" /><section className="relative z-10 mx-auto flex w-full max-w-[390px] flex-col animate-rise"><p className="text-sm text-[#9ca3af]">Total Monthly Spend</p><div className="mt-1 flex items-end justify-between gap-3"><h1 className="text-[32px] font-semibold tracking-[-0.05em]">$26.98 <span className="text-lg font-normal text-[#737984]">/ month</span></h1><span className="rounded-full bg-[#00ff88]/[0.12] px-2.5 py-1 text-[10px] font-semibold text-[#00ff88]">↓ $12 saved this month</span></div><div className="mt-7 rounded-[14px] border border-[#00ff88]/20 bg-[#00ff88]/[0.09] px-4 py-3 text-sm text-[#b9ffd9]">✓ Netflix receipt synced successfully.</div><div className="mt-5 flex flex-col gap-3">{subscriptions.map((subscription, index) => <article key={subscription.name} className={index === 2 ? 'rounded-[20px] border border-[#00ff88]/70 bg-white/[0.045] p-4' : 'rounded-[20px] border border-white/[0.09] bg-white/[0.045] p-4'}><div className="flex items-center gap-3"><span className={`flex size-11 items-center justify-center rounded-xl ${subscription.color} text-lg font-bold text-white`}>{subscription.icon}</span><div className="min-w-0 flex-1"><h2 className="truncate text-sm font-semibold">{subscription.name}</h2><p className={index === 2 ? 'mt-1 text-xs text-orange-300' : 'mt-1 text-xs text-[#9ca3af]'}>{subscription.detail}</p></div><div className="text-right"><p className="text-sm font-semibold">{subscription.price}</p><p className="mt-1 text-[10px] text-[#00ff88]">{index === 2 ? 'Free Trial' : 'Active'}</p></div></div></article>)}</div></section><button aria-label="Add subscription" onClick={() => setShowAddModal(true)} className="fixed bottom-20 right-5 z-20 flex size-14 items-center justify-center rounded-full bg-[#00ff88] text-[#06120e] shadow-[0_0_28px_rgba(0,255,136,.3)] transition-transform hover:scale-105 active:scale-95"><Plus className="size-6" /></button><nav aria-label="Main navigation" className="fixed inset-x-0 bottom-0 z-20 border-t border-white/[0.08] bg-[#0A0A0F]/90 px-8 py-4 backdrop-blur-xl"><div className="mx-auto flex max-w-[390px] items-center justify-between"><button className="flex flex-col items-center gap-1 text-[10px] text-[#00ff88]"><LayoutDashboard className="size-5" /><span>Dashboard</span></button><button className="flex flex-col items-center gap-1 text-[10px] text-[#737984]"><ReceiptText className="size-5" /><span>Trials</span></button><button className="flex flex-col items-center gap-1 text-[10px] text-[#737984]"><Settings className="size-5" /><span>Settings</span></button></div></nav></main>{showAddModal && <ManualAddModal onClose={() => setShowAddModal(false)} />}</>
+  return <> <main className="relative min-h-[100svh] overflow-hidden bg-[#0A0A0F] px-5 pb-24 pt-10 text-white"><div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-[-220px] size-[460px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#00ff88]/[0.06] blur-[110px]" /><section className="relative z-10 mx-auto flex w-full max-w-[390px] flex-col animate-rise"><p className="text-sm text-[#9ca3af]">Total Monthly Spend</p><div className="mt-1 flex items-end justify-between gap-3"><h1 className="text-[32px] font-semibold tracking-[-0.05em]">$26.98 <span className="text-lg font-normal text-[#737984]">/ month</span></h1><span className="rounded-full bg-[#00ff88]/[0.12] px-2.5 py-1 text-[10px] font-semibold text-[#00ff88]">↓ $12 saved this month</span></div><div className="mt-7 rounded-[14px] border border-[#00ff88]/20 bg-[#00ff88]/[0.09] px-4 py-3 text-sm text-[#b9ffd9]">✓ Netflix receipt synced successfully.</div><div className="mt-5 flex flex-col gap-3">{subscriptions.map((subscription, index) => <article key={subscription.name} className={index === 2 ? 'rounded-[20px] border border-[#00ff88]/70 bg-white/[0.045] p-4' : 'rounded-[20px] border border-white/[0.09] bg-white/[0.045] p-4'}><div className="flex items-center gap-3"><span className={`flex size-11 items-center justify-center rounded-xl ${subscription.color} text-lg font-bold text-white`}>{subscription.icon}</span><div className="min-w-0 flex-1"><h2 className="truncate text-sm font-semibold">{subscription.name}</h2><p className={index === 2 ? 'mt-1 text-xs text-orange-300' : 'mt-1 text-xs text-[#9ca3af]'}>{subscription.detail}</p></div><div className="text-right"><p className="text-sm font-semibold">{subscription.price}</p><p className="mt-1 text-[10px] text-[#00ff88]">{index === 2 ? 'Free Trial' : 'Active'}</p></div></div></article>)}</div></section><button aria-label="Add subscription" onClick={() => setShowAddModal(true)} className="fixed bottom-20 right-5 z-20 flex size-14 items-center justify-center rounded-full bg-[#00ff88] text-[#06120e] shadow-[0_0_28px_rgba(0,255,136,.3)] transition-transform hover:scale-105 active:scale-95"><Plus className="size-6" /></button><nav aria-label="Main navigation" className="fixed inset-x-0 bottom-0 z-20 border-t border-white/[0.08] bg-[#0A0A0F]/90 px-8 py-4 backdrop-blur-xl"><div className="mx-auto flex max-w-[390px] items-center justify-between"><button className="flex flex-col items-center gap-1 text-[10px] text-[#00ff88]"><LayoutDashboard className="size-5" /><span>Dashboard</span></button><button className="flex flex-col items-center gap-1 text-[10px] text-[#737984]"><ReceiptText className="size-5" /><span>Trials</span></button><button onClick={onSettings} className="flex flex-col items-center gap-1 text-[10px] text-[#737984]"><Settings className="size-5" /><span>Settings</span></button></div></nav></main>{showAddModal && <ManualAddModal onClose={() => setShowAddModal(false)} />}</>
+}
+
+function SettingsScreen({ onDashboard, onTrials }: { onDashboard: () => void; onTrials: () => void }) {
+  const [pushNotifications, setPushNotifications] = useState(true)
+  const [smsAlerts, setSmsAlerts] = useState(false)
+  const [emailDigest, setEmailDigest] = useState(true)
+  const [escalationAlerts, setEscalationAlerts] = useState(false)
+  const [connectedOutlook, setConnectedOutlook] = useState(false)
+  const [modal, setModal] = useState<'sms' | 'regenerate' | 'delete' | 'connect' | null>(null)
+  const [toast, setToast] = useState('')
+
+  const notify = (message: string) => {
+    setToast(message)
+    window.setTimeout(() => setToast(''), 2200)
+  }
+
+  const copyAlias = async () => {
+    await navigator.clipboard?.writeText('alex.trials@subshield.app')
+    notify('Alias copied!')
+  }
+
+  const toggleSms = () => {
+    if (!smsAlerts) setModal('sms')
+    else setSmsAlerts(false)
+  }
+
+  return (
+    <main className="relative min-h-[100svh] overflow-y-auto bg-[#0A0A0F] px-5 pb-28 pt-10 text-white">
+      <div aria-hidden="true" className="pointer-events-none fixed left-1/2 top-[-210px] size-[430px] -translate-x-1/2 rounded-full bg-[#00ff88]/[0.055] blur-[110px]" />
+      <section className="relative z-10 mx-auto flex w-full max-w-[390px] flex-col gap-6 animate-rise">
+        <header>
+          <h1 className="text-[30px] font-semibold tracking-[-0.04em]">Settings</h1>
+          <p className="mt-1 text-sm text-[#9ca3af]">Manage your account and preferences</p>
+        </header>
+
+        <SettingsCard icon={<LockKeyhole className="size-4" />} title="My Private Alias">
+          <p className="break-all font-mono text-sm text-[#00ff88]">alex.trials@subshield.app</p>
+          <p className="mt-2 text-xs text-[#9ca3af]">Forward receipts and trial confirmations here</p>
+          <div className="mt-4 flex gap-2">
+            <button onClick={copyAlias} className="rounded-lg border border-[#00ff88]/60 px-3 py-2 text-xs font-semibold text-[#00ff88] transition hover:bg-[#00ff88]/10">Copy</button>
+            <button onClick={() => setModal('regenerate')} className="rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-[#c4c8d0] transition hover:bg-white/10">Regenerate</button>
+          </div>
+          <p className="mt-3 text-[11px] leading-4 text-[#737984]">Regenerating will create a new alias. Old emails will stop working.</p>
+        </SettingsCard>
+
+        <SettingsCard icon={<Inbox className="size-4" />} title="Notification Preferences">
+          <SettingsToggle label="Push Notifications" description="Get alerts when trials are about to end" checked={pushNotifications} onChange={() => setPushNotifications(!pushNotifications)} />
+          <SettingsToggle label="SMS Alerts" description="Receive urgent SMS for critical trials" checked={smsAlerts} onChange={toggleSms} note="SMS alerts require SubShield Pro" />
+          <SettingsToggle label="Email Digest" description="Weekly summary of your subscriptions" checked={emailDigest} onChange={() => setEmailDigest(!emailDigest)} />
+          <SettingsToggle label="Escalation Alerts" description="Notify a trusted contact if you ignore alerts" checked={escalationAlerts} onChange={() => setEscalationAlerts(!escalationAlerts)} />
+        </SettingsCard>
+
+        <SettingsCard icon={<Link2 className="size-4" />} title="Connected Accounts">
+          <AccountRow icon="G" name="Gmail" status="Connected" action="Disconnect" onAction={() => setModal('connect')} connected />
+          <AccountRow icon="O" name="Outlook" status={connectedOutlook ? 'Connected' : 'Not connected'} action={connectedOutlook ? 'Disconnect' : 'Connect'} onAction={() => setConnectedOutlook(!connectedOutlook)} connected={connectedOutlook} />
+          <p className="mt-4 text-[11px] italic leading-4 text-[#737984]">We only read receipts and trial confirmations. Never your personal emails.</p>
+        </SettingsCard>
+
+        <SettingsCard icon={<Settings className="size-4" />} title="App Preferences">
+          <PreferenceRow label="Language" value="English" />
+          <PreferenceRow label="Currency" value="USD ($)" />
+          <PreferenceRow label="Time Zone" value="Auto-detect" />
+        </SettingsCard>
+
+        <SettingsCard icon={<ShieldCheck className="size-4" />} title="Account">
+          <PreferenceRow label="Subscription Plan" value="Free" action={<button onClick={() => notify('Upgrade flow opened')} className="rounded-lg bg-[#00ff88] px-3 py-2 text-xs font-bold text-[#06130d]">Upgrade to Pro</button>} />
+          <PreferenceRow label="Export Data" value="Download all your subscription data" action={<button onClick={() => notify('Export started')} className="rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-[#c4c8d0]">Export</button>} stacked />
+          <PreferenceRow label="Delete Account" value="Permanently delete your account and data" action={<button onClick={() => setModal('delete')} className="rounded-lg border border-red-400/50 px-3 py-2 text-xs font-semibold text-red-300">Delete</button>} stacked />
+        </SettingsCard>
+
+        <footer className="pb-3 text-center text-[11px] text-[#737984]"><p>SubShield v1.0.0</p><p className="mt-2">Privacy Policy <span className="px-1">|</span> Terms of Service <span className="px-1">|</span> Contact Support</p></footer>
+      </section>
+
+      <nav aria-label="Main navigation" className="fixed inset-x-0 bottom-0 z-30 border-t border-white/[0.08] bg-[#0A0A0F]/90 px-8 py-4 backdrop-blur-xl"><div className="mx-auto flex max-w-[390px] items-center justify-between"><button onClick={onDashboard} className="flex flex-col items-center gap-1 text-[10px] text-[#737984]"><LayoutDashboard className="size-5" /><span>Dashboard</span></button><button onClick={onTrials} className="flex flex-col items-center gap-1 text-[10px] text-[#737984]"><ReceiptText className="size-5" /><span>Trials</span></button><button aria-current="page" className="flex flex-col items-center gap-1 text-[10px] text-[#00ff88]"><Settings className="size-5" /><span>Settings</span></button></div></nav>
+
+      {toast && <div role="status" className="fixed bottom-24 left-1/2 z-40 -translate-x-1/2 rounded-full border border-[#00ff88]/30 bg-[#13251d] px-4 py-2 text-xs font-semibold text-[#00ff88] shadow-xl">{toast}</div>}
+      {modal && <SettingsModal type={modal} onClose={() => setModal(null)} onConfirm={() => { if (modal === 'sms') setSmsAlerts(true); setModal(null); notify(modal === 'delete' ? 'Delete request submitted' : 'Updated successfully') }} />}
+    </main>
+  )
+}
+
+function SettingsCard({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
+  return <section className="rounded-[18px] border border-white/[0.09] bg-white/[0.045] p-4 shadow-[0_14px_40px_rgba(0,0,0,.12)]"><div className="mb-4 flex items-center gap-2 text-sm font-semibold"><span className="text-[#00ff88]">{icon}</span>{title}</div>{children}</section>
+}
+
+function SettingsToggle({ label, description, checked, onChange, note }: { label: string; description: string; checked: boolean; onChange: () => void; note?: string }) {
+  return <div className="border-b border-white/[0.07] py-3 first:pt-0 last:border-0 last:pb-0"><div className="flex items-start justify-between gap-4"><div><p className="text-sm font-medium">{label}</p><p className="mt-1 text-xs leading-4 text-[#9ca3af]">{description}</p></div><button role="switch" aria-checked={checked} onClick={onChange} className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full p-1 transition ${checked ? 'bg-[#00ff88]' : 'bg-[#3a3b44]'}`}><span className={`block size-4 rounded-full bg-white transition ${checked ? 'translate-x-5' : 'translate-x-0'}`} /></button></div>{note && <p className="mt-2 text-[11px] italic text-[#737984]">{note}</p>}</div>
+}
+
+function AccountRow({ icon, name, status, action, onAction, connected }: { icon: string; name: string; status: string; action: string; onAction: () => void; connected: boolean }) {
+  return <div className="flex items-center gap-3 border-b border-white/[0.07] py-3 last:border-0"><span className={`flex size-9 items-center justify-center rounded-full text-sm font-bold ${name === 'Gmail' ? 'bg-[#ea4335] text-white' : 'bg-[#1473c9] text-white'}`}>{icon}</span><div className="min-w-0 flex-1"><p className="text-sm font-medium">{name}</p><p className={`text-xs ${connected ? 'text-[#00ff88]' : 'text-[#9ca3af]'}`}>{status}</p></div><button onClick={onAction} className={`rounded-lg border px-3 py-2 text-xs font-semibold ${connected ? 'border-white/15 text-[#c4c8d0]' : 'border-[#00ff88]/60 text-[#00ff88]'}`}>{action}</button></div>
+}
+
+function PreferenceRow({ label, value, action, stacked }: { label: string; value: string; action?: ReactNode; stacked?: boolean }) {
+  return <div className={`flex ${stacked ? 'items-start' : 'items-center'} gap-3 border-b border-white/[0.07] py-3 last:border-0`}><div className="min-w-0 flex-1"><p className="text-sm font-medium">{label}</p><p className="mt-1 truncate text-xs text-[#9ca3af]">{value}</p></div>{action || <ChevronRight className="size-4 text-[#737984]" />}</div>
+}
+
+function SettingsModal({ type, onClose, onConfirm }: { type: 'sms' | 'regenerate' | 'delete' | 'connect'; onClose: () => void; onConfirm: () => void }) {
+  const copy = { sms: ['SMS alerts are a Pro feature', 'Upgrade now to receive critical trial alerts?'], regenerate: ['Regenerate private alias?', 'Your old alias will stop working.'], delete: ['Delete your account?', 'This action cannot be undone. All your data will be permanently deleted.'], connect: ['Disconnect Gmail?', 'Future receipts and trial confirmations will no longer sync.'] }[type]
+  return <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm"><div role="dialog" aria-modal="true" className="w-full max-w-[390px] rounded-[22px] border border-white/10 bg-[#1A1A24] p-5 shadow-2xl"><button aria-label="Close modal" onClick={onClose} className="float-right rounded-full p-1 text-[#737984] hover:bg-white/10"><X className="size-5" /></button><div className="clear-both pt-3"><h2 className="text-lg font-semibold">{copy[0]}</h2><p className="mt-2 text-sm leading-5 text-[#9ca3af]">{copy[1]}</p><div className="mt-5 flex gap-2"><button onClick={onClose} className="flex-1 rounded-xl border border-white/15 px-4 py-3 text-sm text-[#c4c8d0]">Cancel</button><button onClick={onConfirm} className={`flex-1 rounded-xl px-4 py-3 text-sm font-bold ${type === 'delete' ? 'bg-red-500 text-white' : 'bg-[#00ff88] text-[#06130d]'}`}>{type === 'sms' ? 'Upgrade' : type === 'delete' ? 'Delete' : 'Confirm'}</button></div></div></div></div>
 }
 
 export default function Page() {
-  const [screen, setScreen] = useState<'login' | 'email' | 'dashboard' | 'alias' | 'processing'>('login')
-  if (screen === 'email') return <EmailScreen onBack={() => setScreen('login')} onContinue={() => setScreen('alias')} />
-  if (screen === 'alias') return <AliasScreen onOpenEmail={() => setScreen('processing')} onLater={() => setScreen('dashboard')} />
-  if (screen === 'processing') return <LiveProcessingScreen onDashboard={() => setScreen('dashboard')} />
-  if (screen === 'dashboard') return <TrialQuarantineScreen onDashboard={() => setScreen('dashboard')} onTrackNew={() => setScreen('dashboard')} />
-  return <LoginScreen onEmail={() => setScreen('email')} />
+  const [currentScreen, setCurrentScreen] = useState<'login' | 'email' | 'dashboard' | 'alias' | 'processing' | 'settings'>('login')
+  if (currentScreen === 'email') return <EmailScreen onBack={() => setCurrentScreen('login')} onContinue={() => setCurrentScreen('alias')} />
+  if (currentScreen === 'alias') return <AliasScreen onOpenEmail={() => setCurrentScreen('processing')} onLater={() => setCurrentScreen('dashboard')} />
+  if (currentScreen === 'processing') return <LiveProcessingScreen onDashboard={() => setCurrentScreen('dashboard')} />
+  if (currentScreen === 'settings') return <SettingsScreen onDashboard={() => setCurrentScreen('dashboard')} onTrials={() => setCurrentScreen('dashboard')} />
+  if (currentScreen === 'dashboard') return <TrialQuarantineScreen onDashboard={() => setCurrentScreen('dashboard')} onTrackNew={() => setCurrentScreen('dashboard')} onSettings={() => setCurrentScreen('settings')} />
+  return <LoginScreen onEmail={() => setCurrentScreen('email')} />
 }
