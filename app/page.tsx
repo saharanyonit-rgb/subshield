@@ -178,14 +178,42 @@ function AliasScreen({ onOpenEmail, onLater }: { onOpenEmail: () => void; onLate
   )
 }
 
+function ProcessingScreen({ onSkip }: { onSkip: () => void }) {
+  return (
+    <main className="relative flex min-h-[100svh] flex-col overflow-hidden bg-[#0A0A0F] px-5 pb-8 pt-12 text-white">
+      <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 size-[360px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#00ff88]/[0.035] blur-[100px]" />
+      <section className="relative z-10 mx-auto flex w-full max-w-[390px] flex-1 flex-col items-center text-center animate-rise">
+        <div className="relative mt-16 flex size-[178px] items-center justify-center">
+          <div className="absolute inset-0 rounded-full border border-[#00ff88]/20 animate-radar" />
+          <div className="absolute inset-5 rounded-full border border-[#00ff88]/25 animate-radar [animation-delay:500ms]" />
+          <div className="absolute inset-10 rounded-full border border-[#00ff88]/35 bg-[#00ff88]/[0.06] shadow-[0_0_55px_rgba(0,255,136,.2)]" />
+          <div className="absolute inset-0 rounded-full bg-[conic-gradient(from_0deg,transparent_0deg,rgba(0,255,136,.32)_70deg,transparent_135deg)] animate-spin-slow" />
+          <div className="relative flex size-16 items-center justify-center rounded-full border border-[#00ff88]/40 bg-[#0c211a] shadow-[0_0_30px_rgba(0,255,136,.28)]"><Mail className="size-7 text-white" strokeWidth={1.7} /></div>
+        </div>
+        <h1 className="mt-10 text-[27px] font-semibold tracking-[-0.045em]">Listening for your email...</h1>
+        <p className="mt-3 max-w-[330px] text-sm leading-5 text-[#9ca3af]">Forward a receipt to <span className="font-medium text-[#00ff88]">alex.trials@subshield.app</span> and we&apos;ll catch it.</p>
+        <div className="mt-8 w-full rounded-[24px] border border-white/[0.09] bg-white/[0.045] p-5 text-left shadow-[0_18px_70px_rgba(0,0,0,.28)] backdrop-blur-xl">
+          <div className="flex items-center gap-3"><span className="flex size-7 items-center justify-center rounded-full bg-[#00ff88] text-[#06120e]"><Check className="size-4" strokeWidth={3} /></span><span className="text-sm text-[#d7dbe0]">Email alias created</span></div>
+          <div className="my-4 ml-3.5 h-4 border-l border-dashed border-[#00ff88]/25" />
+          <div className="flex items-center gap-3"><span className="relative flex size-7 items-center justify-center rounded-full border border-[#737984]"><span className="size-2 rounded-full bg-[#9ca3af] animate-pulse" /></span><span className="text-sm text-white">Waiting for incoming email...</span><span className="ml-auto text-[10px] uppercase tracking-[.14em] text-[#00ff88]/80">Live</span></div>
+          <div className="my-4 ml-3.5 h-4 border-l border-dashed border-white/10" />
+          <div className="flex items-center gap-3 text-[#737984]"><span className="flex size-7 items-center justify-center rounded-full border border-white/10"><LockKeyhole className="size-3.5" /></span><span className="text-sm">Extracting price and billing date</span></div>
+        </div>
+      </section>
+      <button onClick={onSkip} className="relative z-10 mx-auto mt-8 text-sm text-[#737984] underline decoration-[#737984]/50 underline-offset-4 transition-colors hover:text-white">Skip for now</button>
+    </main>
+  )
+}
+
 function DashboardScreen({ onBack, onGenerate }: { onBack: () => void; onGenerate: () => void }) {
   return <main className="relative min-h-[100svh] overflow-hidden bg-[#0A0A0F] px-5 pb-24 pt-10 text-white"><div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-[-220px] size-[460px] -translate-x-1/2 rounded-full bg-[#00ff88]/[0.06] blur-[110px]" /><section className="relative z-10 mx-auto flex w-full max-w-[390px] flex-col"><button onClick={onBack} className="mb-9 flex w-fit items-center gap-2 text-xs text-[#737984] hover:text-white"><ArrowLeft className="size-4" />Back</button><div className="animate-rise"><p className="text-sm text-[#9ca3af]">Good morning</p><h1 className="mt-1 text-[32px] font-semibold tracking-[-0.05em]">Welcome, Alex!</h1><p className="mt-2 text-sm text-[#9ca3af]">Your dashboard is empty.</p></div><div className="mt-12 flex flex-col items-center text-center animate-rise [animation-delay:100ms] [animation-fill-mode:backwards]"><EmptyVault /><h2 className="mt-7 text-lg font-semibold">Your subscriptions will appear here</h2><p className="mt-2 max-w-[280px] text-sm leading-5 text-[#737984]">Get started by creating your private email alias.</p></div><div className="mt-9 rounded-[24px] border border-white/[0.09] bg-white/[0.045] p-5 shadow-[0_18px_70px_rgba(0,0,0,.28)] backdrop-blur-xl animate-rise [animation-delay:180ms] [animation-fill-mode:backwards]"><p className="mb-5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#00ff88]/75">How SubShield works</p><div className="flex flex-col gap-5">{['Generate your private alias','Forward receipts to it','We track your billing dates'].map((label, index) => <div key={label} className="flex items-center gap-3"><span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#00ff88]/[0.1] text-xs font-semibold text-[#00ff88]">{index + 1}</span><span className="text-sm text-[#d7dbe0]">{label}</span><ChevronRight className="ml-auto size-4 text-[#4b535d]" /></div>)}</div><Button className="mt-6 h-12 w-full rounded-[12px] bg-[#00ff88] text-sm font-semibold text-[#06120e] hover:bg-[#34ffa3] active:scale-[.985]">Generate My Private Alias<ArrowRight data-icon="inline-end" /></Button></div></section><nav aria-label="Bottom navigation" className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-[#0A0A0F]/90 px-5 py-3 backdrop-blur-xl"><div className="mx-auto flex max-w-[390px] items-center justify-around text-[11px]"><button className="flex flex-col items-center gap-1 text-[#00ff88]"><Inbox className="size-5" />Dashboard</button><button className="flex flex-col items-center gap-1 text-[#737984]"><span className="flex size-5 items-center justify-center rounded-full border border-current text-[9px]">T</span>Trials</button><button className="flex flex-col items-center gap-1 text-[#737984]"><span className="flex size-5 items-center justify-center rounded-full border border-current text-[9px]">S</span>Settings</button></div></nav></main>
 }
 
 export default function Page() {
-  const [screen, setScreen] = useState<'login' | 'email' | 'dashboard' | 'alias'>('login')
+  const [screen, setScreen] = useState<'login' | 'email' | 'dashboard' | 'alias' | 'processing'>('login')
   if (screen === 'email') return <EmailScreen onBack={() => setScreen('login')} onContinue={() => setScreen('alias')} />
-  if (screen === 'alias') return <AliasScreen onOpenEmail={() => setScreen('dashboard')} onLater={() => setScreen('dashboard')} />
+  if (screen === 'alias') return <AliasScreen onOpenEmail={() => setScreen('processing')} onLater={() => setScreen('dashboard')} />
+  if (screen === 'processing') return <ProcessingScreen onSkip={() => setScreen('dashboard')} />
   if (screen === 'dashboard') return <DashboardScreen onBack={() => setScreen('email')} onGenerate={() => setScreen('alias')} />
   return <LoginScreen onEmail={() => setScreen('email')} />
 }

@@ -198,6 +198,26 @@
   animation: sheet-up 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+@keyframes radar {
+  0% { transform: scale(.72); opacity: .75; }
+  75%, 100% { transform: scale(1.12); opacity: 0; }
+}
+
+.animate-radar {
+  animation: radar 2.6s ease-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin 5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-radar,
+  .animate-spin-slow {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-rise,
   .animate-pulse-soft {
