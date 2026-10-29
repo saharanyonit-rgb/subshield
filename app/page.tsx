@@ -4,8 +4,11 @@ import { useEffect, useState, type ReactNode } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
+  ChevronDown,
   ChevronRight,
+  CheckCircle2,
   Copy,
+  Crown,
   ExternalLink,
   Inbox,
   LayoutDashboard,
@@ -271,7 +274,7 @@ function EscapeRouteModal({ onClose, onSaved }: { onClose: () => void; onSaved: 
   )
 }
 
-function AllClearState({ onTrackNew, onDashboard, onShowTrials }: { onTrackNew: () => void; onDashboard: () => void; onShowTrials: () => void }) {
+function AllClearState({ onTrackNew, onDashboard, onShowTrials, onSettings }: { onTrackNew: () => void; onDashboard: () => void; onShowTrials: () => void; onSettings: () => void }) {
   const [copied, setCopied] = useState(false)
   const [saved, setSaved] = useState(127.97)
 
@@ -319,7 +322,7 @@ function TrialQuarantineScreen({ onDashboard, onTrackNew, onSettings }: { onDash
     { name: 'Hulu', logo: 'h', logoClass: 'bg-[#1ce783]', detail: 'Charges $7.99 in 6 days', timer: '6d 04h', tone: 'safe', action: 'Review trial' },
   ] as const
 
-  if (!hasActiveTrials) return <><AllClearState onTrackNew={() => setShowAddModal(true)} onDashboard={onDashboard} onShowTrials={() => setHasActiveTrials(true)} />{showAddModal && <ManualAddModal onClose={() => setShowAddModal(false)} />}</>
+  if (!hasActiveTrials) return <><AllClearState onTrackNew={() => setShowAddModal(true)} onDashboard={onDashboard} onShowTrials={() => setHasActiveTrials(true)} onSettings={onSettings} />{showAddModal && <ManualAddModal onClose={() => setShowAddModal(false)} />}</>
 
   return (
     <main className="relative min-h-[100svh] overflow-hidden bg-[#0A0A0F] px-5 pb-10 pt-10 text-white">
@@ -381,7 +384,36 @@ function ConnectedDashboardScreen({ onSettings }: { onSettings: () => void }) {
   return <> <main className="relative min-h-[100svh] overflow-hidden bg-[#0A0A0F] px-5 pb-24 pt-10 text-white"><div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-[-220px] size-[460px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#00ff88]/[0.06] blur-[110px]" /><section className="relative z-10 mx-auto flex w-full max-w-[390px] flex-col animate-rise"><p className="text-sm text-[#9ca3af]">Total Monthly Spend</p><div className="mt-1 flex items-end justify-between gap-3"><h1 className="text-[32px] font-semibold tracking-[-0.05em]">$26.98 <span className="text-lg font-normal text-[#737984]">/ month</span></h1><span className="rounded-full bg-[#00ff88]/[0.12] px-2.5 py-1 text-[10px] font-semibold text-[#00ff88]">↓ $12 saved this month</span></div><div className="mt-7 rounded-[14px] border border-[#00ff88]/20 bg-[#00ff88]/[0.09] px-4 py-3 text-sm text-[#b9ffd9]">✓ Netflix receipt synced successfully.</div><div className="mt-5 flex flex-col gap-3">{subscriptions.map((subscription, index) => <article key={subscription.name} className={index === 2 ? 'rounded-[20px] border border-[#00ff88]/70 bg-white/[0.045] p-4' : 'rounded-[20px] border border-white/[0.09] bg-white/[0.045] p-4'}><div className="flex items-center gap-3"><span className={`flex size-11 items-center justify-center rounded-xl ${subscription.color} text-lg font-bold text-white`}>{subscription.icon}</span><div className="min-w-0 flex-1"><h2 className="truncate text-sm font-semibold">{subscription.name}</h2><p className={index === 2 ? 'mt-1 text-xs text-orange-300' : 'mt-1 text-xs text-[#9ca3af]'}>{subscription.detail}</p></div><div className="text-right"><p className="text-sm font-semibold">{subscription.price}</p><p className="mt-1 text-[10px] text-[#00ff88]">{index === 2 ? 'Free Trial' : 'Active'}</p></div></div></article>)}</div></section><button aria-label="Add subscription" onClick={() => setShowAddModal(true)} className="fixed bottom-20 right-5 z-20 flex size-14 items-center justify-center rounded-full bg-[#00ff88] text-[#06120e] shadow-[0_0_28px_rgba(0,255,136,.3)] transition-transform hover:scale-105 active:scale-95"><Plus className="size-6" /></button><nav aria-label="Main navigation" className="fixed inset-x-0 bottom-0 z-20 border-t border-white/[0.08] bg-[#0A0A0F]/90 px-8 py-4 backdrop-blur-xl"><div className="mx-auto flex max-w-[390px] items-center justify-between"><button className="flex flex-col items-center gap-1 text-[10px] text-[#00ff88]"><LayoutDashboard className="size-5" /><span>Dashboard</span></button><button className="flex flex-col items-center gap-1 text-[10px] text-[#737984]"><ReceiptText className="size-5" /><span>Trials</span></button><button onClick={onSettings} className="flex flex-col items-center gap-1 text-[10px] text-[#737984]"><Settings className="size-5" /><span>Settings</span></button></div></nav></main>{showAddModal && <ManualAddModal onClose={() => setShowAddModal(false)} />}</>
 }
 
+function ProUpgradeScreen({ onClose, onStarted }: { onClose: () => void; onStarted: () => void }) {
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly')
+  const [openFaq, setOpenFaq] = useState<number | null>(0)
+  const [success, setSuccess] = useState(false)
+  const features = [['Unlimited subscription tracking', 'Free: 5 subscriptions | Pro: Unlimited'], ['SMS & escalation alerts', 'Never miss a trial deadline'], ['AI-powered receipt scanning', 'Auto-extract from any email'], ['Priority cancellation support', 'We cancel for you'], ['Ad-free experience', 'Clean, distraction-free interface'], ['Advanced analytics & reports', 'Track your savings over time']]
+  const faqs = [['Can I cancel anytime?', 'Yes, cancel anytime from Settings. No hidden fees.'], ['What payment methods do you accept?', 'All major credit cards, Apple Pay, and Google Pay.'], ['Is my data secure?', 'Absolutely. We never access your bank accounts. All data is encrypted.']]
+  const startTrial = () => {
+    setSuccess(true)
+    window.setTimeout(onStarted, 3000)
+  }
+
+  return <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#0A0A0F]/90 backdrop-blur-sm">
+    <main className="relative max-h-[100svh] w-full max-w-[430px] overflow-y-auto bg-[#0A0A0F] px-5 pb-36 pt-8 text-white animate-sheet-up">
+      <button aria-label="Close Pro upgrade" onClick={onClose} className="absolute right-5 top-5 z-10 flex size-10 items-center justify-center rounded-full bg-white/[.09] text-white hover:bg-white/[.16]"><X className="size-5" /></button>
+      <section className="flex flex-col items-center text-center"><div className="flex size-20 items-center justify-center rounded-full border border-[#FFD700]/50 bg-[#FFD700]/[.12] text-[#FFD700] shadow-[0_0_55px_rgba(255,215,0,.3)] animate-pulse-soft"><Crown className="size-10" /></div><h1 className="mt-5 text-[30px] font-semibold tracking-[-.05em]">Unlock SubShield Pro</h1><p className="mt-2 max-w-[320px] text-sm text-[#9CA3AF]">Take your subscription management to the next level</p></section>
+      <section className="mt-7 rounded-[18px] border border-[#FFD700]/40 bg-[#FFD700]/[.08] p-4 text-left"><div className="flex gap-3"><span className="text-xl text-[#FFD700]">★</span><div><p className="text-sm font-semibold">Join 10,000+ users who saved an average of $347 this year</p><p className="mt-1 text-xs text-[#9CA3AF]">4.9/5 rating from 2,300+ reviews</p></div></div></section>
+      <section className="mt-8"><h2 className="text-lg font-semibold">What you get with Pro</h2><div className="mt-3 overflow-hidden rounded-[18px] border border-white/[.09] bg-[#1A1A24]">{features.map(([title, description]) => <div key={title} className="flex gap-3 border-b border-white/[.07] p-4 last:border-0"><div className="flex gap-1 pt-0.5"><span className="text-sm text-[#737984]">×</span><span className="text-sm font-bold text-[#00FF88]">✓</span></div><div><p className="text-sm font-medium">{title}</p><p className="mt-1 text-xs text-[#9CA3AF]">{description}</p></div></div>)}</div></section>
+      <section className="mt-8"><h2 className="text-lg font-semibold">Choose your plan</h2><div className="mt-3 grid grid-cols-2 gap-3"><button onClick={() => setSelectedPlan('monthly')} className={`rounded-[16px] border p-4 text-left transition hover:scale-[1.02] ${selectedPlan === 'monthly' ? 'border-[#FFD700] bg-[#FFD700]/[.08]' : 'border-white/15 bg-white/[.04]'}`}><p className="text-sm font-semibold">Monthly</p><p className="mt-3 text-[28px] font-semibold">$4.99</p><p className="text-xs text-[#9CA3AF]">/month</p><span className="mt-4 block rounded-lg border border-white/20 px-2 py-2 text-center text-xs">Choose Monthly</span></button><button onClick={() => setSelectedPlan('yearly')} className={`relative rounded-[16px] border p-4 text-left transition hover:scale-[1.02] ${selectedPlan === 'yearly' ? 'border-[#FFD700] bg-[#FFD700]/[.12]' : 'border-[#FFD700]/50 bg-[#FFD700]/[.06]'}`}><span className="absolute -top-3 left-3 rounded-full bg-[#FFD700] px-2 py-1 text-[9px] font-bold text-[#111]">BEST VALUE</span><p className="text-sm font-semibold">Yearly</p><p className="mt-3 text-[28px] font-semibold">$29.99</p><p className="text-xs text-[#9CA3AF]">/year</p><p className="mt-3 text-[11px] font-bold text-[#00FF88]">Save 50% vs monthly</p><span className="mt-3 block rounded-lg bg-[#FFD700] px-2 py-2 text-center text-xs font-bold text-[#111]">Choose Yearly</span></button></div></section>
+      <section className="mt-6 rounded-[18px] border border-white/[.09] bg-white/[.045] p-4"><div className="flex gap-3"><ShieldCheck className="size-6 shrink-0 text-[#FFD700]" /><div><h3 className="font-semibold">7-Day Free Trial</h3><p className="mt-1 text-sm text-[#9CA3AF]">Try Pro free for 7 days. Cancel anytime. No questions asked.</p><p className="mt-2 text-xs text-[#737984]">You won&apos;t be charged until the trial ends.</p></div></div></section>
+      <section className="mt-6 rounded-[18px] border border-white/[.09] bg-white/[.045] p-4"><p className="text-3xl text-[#737984]">&quot;</p><p className="-mt-2 text-sm italic leading-5">SubShield Pro saved me $240 in the first month. The SMS alerts alone are worth it.</p><p className="mt-3 text-xs text-[#9CA3AF]">- Sarah K., Verified User</p><p className="mt-2 tracking-[.25em] text-[#FFD700]">★★★★★</p></section>
+      <section className="mt-8"><h2 className="text-lg font-semibold">Frequently asked questions</h2><div className="mt-3 rounded-[18px] border border-white/[.09] bg-[#1A1A24]">{faqs.map(([question, answer], index) => <div key={question} className="border-b border-white/[.07] last:border-0"><button onClick={() => setOpenFaq(openFaq === index ? null : index)} className="flex w-full items-center justify-between gap-4 p-4 text-left text-sm font-medium"><span>{question}</span><ChevronDown className={`size-4 shrink-0 transition-transform ${openFaq === index ? 'rotate-180 text-[#FFD700]' : 'text-[#737984]'}`} /></button>{openFaq === index && <p className="px-4 pb-4 text-xs leading-5 text-[#9CA3AF] animate-rise">{answer}</p>}</div>)}</div></section>
+      <div className="fixed bottom-0 left-1/2 z-20 w-full max-w-[430px] -translate-x-1/2 border-t border-white/10 bg-[#0A0A0F]/95 px-5 pb-5 pt-3 backdrop-blur-xl"><button onClick={startTrial} className="h-14 w-full rounded-[12px] bg-[#FFD700] text-sm font-bold text-[#111] transition hover:bg-[#ffe34d] active:scale-[.985]">Start 7-Day Free Trial</button><p className="mt-2 text-center text-[11px] text-[#9CA3AF]">Then {selectedPlan === 'yearly' ? '$29.99/year' : '$4.99/month'}. Cancel anytime.</p></div>
+      {success && <div className="fixed inset-0 z-30 flex items-center justify-center bg-[#0A0A0F]/80 p-5 backdrop-blur-sm"><div role="status" className="w-full max-w-[330px] rounded-[22px] border border-[#FFD700]/40 bg-[#1A1A24] p-6 text-center shadow-2xl animate-rise"><CheckCircle2 className="mx-auto size-14 text-[#00FF88]" /><h2 className="mt-4 text-xl font-semibold">Welcome to Pro!</h2><p className="mt-2 text-sm text-[#9CA3AF]">Your 7-day trial has started.</p></div></div>}
+    </main>
+  </div>
+}
+
 function SettingsScreen({ onDashboard, onTrials }: { onDashboard: () => void; onTrials: () => void }) {
+  const [showProScreen, setShowProScreen] = useState(false)
+  const [isPro, setIsPro] = useState(false)
   const [pushNotifications, setPushNotifications] = useState(true)
   const [smsAlerts, setSmsAlerts] = useState(false)
   const [emailDigest, setEmailDigest] = useState(true)
@@ -394,6 +426,8 @@ function SettingsScreen({ onDashboard, onTrials }: { onDashboard: () => void; on
     setToast(message)
     window.setTimeout(() => setToast(''), 2200)
   }
+
+  if (showProScreen) return <ProUpgradeScreen onClose={() => setShowProScreen(false)} onStarted={() => { setIsPro(true); setShowProScreen(false); setToast('Pro is now active!') }} />
 
   const copyAlias = async () => {
     await navigator.clipboard?.writeText('alex.trials@subshield.app')
@@ -410,7 +444,7 @@ function SettingsScreen({ onDashboard, onTrials }: { onDashboard: () => void; on
       <div aria-hidden="true" className="pointer-events-none fixed left-1/2 top-[-210px] size-[430px] -translate-x-1/2 rounded-full bg-[#00ff88]/[0.055] blur-[110px]" />
       <section className="relative z-10 mx-auto flex w-full max-w-[390px] flex-col gap-6 animate-rise">
         <header>
-          <h1 className="text-[30px] font-semibold tracking-[-0.04em]">Settings</h1>
+          <div className="flex items-center gap-3"><h1 className="text-[30px] font-semibold tracking-[-0.04em]">Settings</h1>{isPro && <span className="rounded-full border border-[#FFD700]/50 bg-[#FFD700]/10 px-2.5 py-1 text-[10px] font-bold text-[#FFD700]">PRO</span>}</div>
           <p className="mt-1 text-sm text-[#9ca3af]">Manage your account and preferences</p>
         </header>
 
@@ -444,7 +478,7 @@ function SettingsScreen({ onDashboard, onTrials }: { onDashboard: () => void; on
         </SettingsCard>
 
         <SettingsCard icon={<ShieldCheck className="size-4" />} title="Account">
-          <PreferenceRow label="Subscription Plan" value="Free" action={<button onClick={() => notify('Upgrade flow opened')} className="rounded-lg bg-[#00ff88] px-3 py-2 text-xs font-bold text-[#06130d]">Upgrade to Pro</button>} />
+          <PreferenceRow label="Subscription Plan" value={isPro ? 'Pro — active' : 'Free'} action={isPro ? <span className="rounded-full border border-[#FFD700]/50 bg-[#FFD700]/10 px-3 py-1.5 text-xs font-bold text-[#FFD700]">Pro</span> : <button onClick={() => setShowProScreen(true)} className="rounded-lg bg-[#00ff88] px-3 py-2 text-xs font-bold text-[#06130d]">Upgrade to Pro</button>} />
           <PreferenceRow label="Export Data" value="Download all your subscription data" action={<button onClick={() => notify('Export started')} className="rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-[#c4c8d0]">Export</button>} stacked />
           <PreferenceRow label="Delete Account" value="Permanently delete your account and data" action={<button onClick={() => setModal('delete')} className="rounded-lg border border-red-400/50 px-3 py-2 text-xs font-semibold text-red-300">Delete</button>} stacked />
         </SettingsCard>
