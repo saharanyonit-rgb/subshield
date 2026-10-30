@@ -150,7 +150,9 @@ function EmailAuthModal({ supabase, initialMode, onClose, onSuccess }: { supabas
       const message = result.error.message.toLowerCase()
       const unconfirmed = message.includes('confirm') || message.includes('not verified')
       setNeedsConfirmation(unconfirmed)
-      setError(unconfirmed ? 'Your email is not confirmed yet.' : 'Invalid email or password. If you are new to SubShield, create an account below.')
+      if (unconfirmed) setError('Your email is not confirmed yet.')
+      else if (mode === 'sign-up') setError(message.includes('already') ? 'An account already exists for this email. Sign in instead.' : 'Could not create your account. Use a valid email and a password with at least 6 characters.')
+      else setError('Invalid email or password. If you are new to SubShield, create an account below.')
       return
     }
     if (mode === 'sign-up' && !result.data.session) { setError('Check your email to confirm your account.'); return }
