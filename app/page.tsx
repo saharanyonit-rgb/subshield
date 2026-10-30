@@ -1,77 +1,223 @@
-import { Button } from '@/components/ui/button'
-import { LockKeyhole, Mail, ShieldCheck } from 'lucide-react'
+'use client'
 
-function AppleMark() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-[18px] fill-current">
-      <path d="M17.05 12.54c-.02-2.24 1.83-3.32 1.92-3.37a4.13 4.13 0 0 0-3.26-1.76c-1.38-.14-2.72.82-3.43.82-.72 0-1.82-.8-2.99-.78a4.4 4.4 0 0 0-3.7 2.25c-1.6 2.78-.4 6.86 1.15 9.1.76 1.1 1.65 2.32 2.82 2.27 1.14-.05 1.57-.73 2.95-.73 1.37 0 1.76.73 2.96.7 1.23-.02 2-1.1 2.75-2.2a9.05 9.05 0 0 0 1.25-2.55 3.95 3.95 0 0 1-2.42-3.75ZM14.8 5.94a3.96 3.96 0 0 0 .9-2.85 4.02 4.02 0 0 0-2.6 1.34 3.75 3.75 0 0 0-.93 2.73 3.3 3.3 0 0 0 2.63-1.22Z" />
-    </svg>
-  )
-}
+import { type FormEvent, useEffect, useMemo, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CalendarDays,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  CircleDollarSign,
+  Clipboard,
+  Clock3,
+  Copy,
+  Crown,
+  FileText,
+  Inbox,
+  LayoutDashboard,
+  Link2,
+  LockKeyhole,
+  Mail,
+  Menu,
+  Plus,
+  ReceiptText,
+  ScanLine,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+  X,
+  Zap,
+} from 'lucide-react'
 
-function GoogleMark() {
-  return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-[18px]">
-      <path fill="#4285F4" d="M21.35 12.27c0-.72-.06-1.42-.18-2.09H12v3.96h5.23a4.47 4.47 0 0 1-1.94 2.93v2.44h3.14c1.84-1.7 2.92-4.2 2.92-7.24Z" />
-      <path fill="#34A853" d="M12 21.7c2.63 0 4.84-.87 6.45-2.35l-3.14-2.44c-.87.58-1.98.92-3.31.92-2.54 0-4.7-1.72-5.47-4.03H3.29v2.52A9.74 9.74 0 0 0 12 21.7Z" />
-      <path fill="#FBBC05" d="M6.53 13.8A5.85 5.85 0 0 1 6.22 12c0-.63.11-1.24.31-1.8V7.68H3.29A9.75 9.75 0 0 0 2.25 12c0 1.57.38 3.05 1.04 4.32l3.24-2.52Z" />
-      <path fill="#EA4335" d="M12 6.17c1.43 0 2.71.49 3.72 1.46l2.79-2.79C16.84 3.27 14.63 2.3 12 2.3a9.74 9.74 0 0 0-8.71 5.38l3.24 2.52C7.3 7.89 9.46 6.17 12 6.17Z" />
-    </svg>
-  )
-}
+type Screen = 'login' | 'empty-dashboard' | 'alias-reveal' | 'syncing' | 'dashboard' | 'trials' | 'settings' | 'pro-upgrade'
+type Theme = 'light' | 'dark'
+type Subscription = { id: string | number; name: string; price: number; nextBill: string; isTrial: boolean; hoursLeft?: number; notes?: string }
 
-function ShieldMark() {
-  return (
-    <div className="relative flex size-[82px] items-center justify-center rounded-[26px] bg-[#071c17] shadow-[0_0_0_1px_rgba(0,255,136,.35),0_0_35px_rgba(0,255,136,.22),inset_0_0_24px_rgba(0,255,136,.10)]">
-      <div className="absolute inset-[-9px] rounded-[31px] border border-[#00ff88]/10" />
-      <ShieldCheck className="size-[48px] text-[#00ff88]" strokeWidth={1.25} />
-      <Mail className="absolute size-[17px] text-[#0A0A0F]" strokeWidth={2.5} />
-    </div>
-  )
-}
+const initialSubscriptions: Subscription[] = [
+  { id: 1, name: 'Netflix', price: 15.99, nextBill: 'Nov 12', isTrial: false },
+  { id: 2, name: 'Spotify', price: 10.99, nextBill: 'Nov 15', isTrial: false },
+  { id: 3, name: 'Adobe CC', price: 54.99, nextBill: 'Nov 8', isTrial: true, hoursLeft: 14 },
+]
+
+const colors: Record<string, string> = { Netflix: 'bg-[#E50914]', Spotify: 'bg-[#1DB954]', 'Adobe CC': 'bg-[#EB1000]', Amazon: 'bg-[#FF9900]', Apple: 'bg-[#121A2B]', YouTube: 'bg-[#FF0033]', Hulu: 'bg-[#1CE783]' }
 
 export default function Page() {
-  return (
-    <main className="relative flex min-h-[100svh] items-center justify-center overflow-hidden bg-[#0A0A0F] px-5 py-10 text-white">
-      <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-[-180px] size-[420px] -translate-x-1/2 rounded-full bg-[#00ff88]/[0.055] blur-[90px]" />
-      <div aria-hidden="true" className="pointer-events-none absolute bottom-[-200px] right-[-170px] size-[420px] rounded-full bg-[#134d5a]/[0.12] blur-[100px]" />
+  const [currentScreen, setCurrentScreen] = useState<Screen>('login')
+  const [theme, setTheme] = useState<Theme>('light')
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
+  const [hasActiveTrials, setHasActiveTrials] = useState(true)
+  const [isPro, setIsPro] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly')
+  const [showEscapeRoute, setShowEscapeRoute] = useState(false)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [toast, setToast] = useState('')
+  const [authReady, setAuthReady] = useState(false)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [showEmailAuth, setShowEmailAuth] = useState(false)
+  const [emailAuthMode, setEmailAuthMode] = useState<'sign-in' | 'sign-up'>('sign-in')
+  const supabase = useMemo(() => createClient(), [])
 
-      <section className="animate-rise relative z-10 flex w-full max-w-[390px] flex-col items-center">
-        <div className="animate-rise [animation-delay:80ms] [animation-fill-mode:backwards]"><ShieldMark /></div>
+  useEffect(() => {
+    document.body.style.backgroundColor = theme === 'dark' ? '#000000' : '#F5F7FB'
+    document.body.style.color = theme === 'dark' ? '#FFFFFF' : '#121A2B'
+    return () => { document.body.style.backgroundColor = ''; document.body.style.color = '' }
+  }, [theme])
 
-        <div className="mt-9 text-center animate-rise [animation-delay:160ms] [animation-fill-mode:backwards]">
-          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#00ff88]/80">Privacy, by default</p>
-          <h1 className="text-[34px] font-semibold leading-[1.08] tracking-[-0.045em] text-white">
-            Track your subscriptions.<br />
-            <span className="text-white/90">Keep your bank data private.</span>
-          </h1>
-          <p className="mx-auto mt-5 max-w-[340px] text-[15px] leading-6 text-[#8c929b]">
-            No bank linking required. We use a private email alias to automatically track your trials and bills.
-          </p>
-        </div>
+  useEffect(() => {
+    let active = true
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!active) return
+      const user = data.session?.user
+      if (!user) { setAuthReady(true); return }
+      setUserEmail(user.email ?? null)
+      const [{ data: profile }, { data: rows }] = await Promise.all([
+        supabase.from('profiles').select('theme, is_pro').eq('id', user.id).maybeSingle(),
+        supabase.from('subscriptions').select('id, name, price, next_bill, is_trial, hours_left, notes').eq('user_id', user.id).order('created_at'),
+      ])
+      if (profile?.theme === 'dark' || profile?.theme === 'light') setTheme(profile.theme)
+      if (typeof profile?.is_pro === 'boolean') setIsPro(profile.is_pro)
+      const safeRows = rows ?? []
+      setSubscriptions(safeRows.map((row) => ({ id: row.id, name: row.name, price: Number(row.price), nextBill: row.next_bill, isTrial: row.is_trial, hoursLeft: row.hours_left ?? undefined, notes: row.notes ?? undefined })))
+      setAuthReady(true)
+    })
+    return () => { active = false }
+  }, [supabase])
 
-        <div className="mt-8 w-full rounded-[26px] border border-white/[0.09] bg-white/[0.045] p-3 shadow-[0_18px_70px_rgba(0,0,0,.28)] backdrop-blur-xl animate-rise [animation-delay:240ms] [animation-fill-mode:backwards]">
-          <div className="flex flex-col gap-3">
-            <Button className="h-14 w-full rounded-[17px] bg-[#050507] text-[15px] font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,.08)] hover:bg-[#15151a] active:bg-[#222229]" aria-label="Continue with Apple">
-              <AppleMark />
-              Continue with Apple
-            </Button>
-            <Button className="h-14 w-full rounded-[17px] bg-white text-[15px] font-medium text-[#15161a] shadow-[0_4px_16px_rgba(0,0,0,.12)] hover:bg-[#ededed] active:bg-[#d9d9d9]" aria-label="Continue with Google">
-              <GoogleMark />
-              Continue with Google
-            </Button>
-            <Button variant="outline" className="h-14 w-full rounded-[17px] border-[#00ff88]/55 bg-transparent text-[15px] font-medium text-[#00ff88] hover:border-[#00ff88] hover:bg-[#00ff88]/[0.08] active:bg-[#00ff88]/[0.14]" aria-label="Sign up with Email">
-              <Mail data-icon="inline-start" />
-              Sign up with Email
-            </Button>
-          </div>
-        </div>
+  const notify = (message: string) => { setToast(message); window.setTimeout(() => setToast(''), 2400) }
+  const go = (screen: Screen) => setCurrentScreen(screen)
+  const openDashboard = () => go(subscriptions.length ? 'dashboard' : 'empty-dashboard')
+  const handleOAuth = (provider: 'google' | 'apple') => {
+    setEmailAuthMode('sign-in')
+    setShowEmailAuth(true)
+    notify(`${provider === 'google' ? 'Google' : 'Apple'} sign-in is unavailable, so email sign-in is ready instead.`)
+  }
+  const handleEmailAuth = (email: string) => { setUserEmail(email); setShowEmailAuth(false); setAuthReady(true); openDashboard() }
+  const openEmailAuth = (mode: 'sign-in' | 'sign-up') => { setEmailAuthMode(mode); setShowEmailAuth(true) }
+  const changeTheme = async (nextTheme: Theme) => { setTheme(nextTheme); if (userEmail) { const { data: user } = await supabase.auth.getUser(); if (user.user) await supabase.from('profiles').upsert({ id: user.user.id, theme: nextTheme }, { onConflict: 'id' }) } }
+  const finishSync = async () => {
+    const { data: user } = await supabase.auth.getUser()
+    if (!user.user) return
+    const { data: rows } = await supabase.from('subscriptions').select('id, name, price, next_bill, is_trial, hours_left, notes').eq('user_id', user.user.id)
+    const safeRows = rows ?? []
+    if (!safeRows.length) {
+      const { data: seeded } = await supabase.from('subscriptions').insert(initialSubscriptions.map((item) => ({ user_id: user.user!.id, name: item.name, price: item.price, next_bill: `2026-${item.name === 'Adobe CC' ? '11-08' : item.name === 'Netflix' ? '11-12' : '11-15'}`, is_trial: item.isTrial, hours_left: item.hoursLeft ?? null }))).select('id, name, price, next_bill, is_trial, hours_left, notes')
+      const safeSeeded = seeded ?? []
+      setSubscriptions(safeSeeded.map((row) => ({ id: row.id, name: row.name, price: Number(row.price), nextBill: row.next_bill, isTrial: row.is_trial, hoursLeft: row.hours_left ?? undefined })))
+    }
+    go('dashboard')
+  }
 
-        <p className="mt-7 flex max-w-[310px] items-start justify-center gap-2 text-center text-[11px] leading-[1.55] text-[#666c76] animate-rise [animation-delay:320ms] [animation-fill-mode:backwards]">
-          <LockKeyhole className="mt-0.5 size-3.5 shrink-0 text-[#00ff88]/75" />
-          <span>We will <strong className="font-medium text-[#8d929a]">NEVER</strong> ask for your bank password or financial credentials.</span>
-        </p>
-      </section>
-    </main>
-  )
+  if (!authReady) return <main className="flex min-h-screen items-center justify-center text-sm text-[#6B7280]">Loading SubShield...</main>
+
+  return <div className={`${theme === 'dark' ? 'theme-dark' : 'theme-light'} min-h-screen font-sans text-[#121A2B] transition-colors duration-300`}>
+    <style>{`.theme-dark, .theme-dark > div { background:#000000 !important; color:#ffffff !important; color-scheme:dark; } .theme-dark [class~="bg-white"], .theme-dark [class*="bg-white/"] { background:#111111 !important; } .theme-dark [class*="bg-[#F5F7FB]"] { background:#000000 !important; } .theme-dark [class*="bg-[#E8ECFF]"] { background:#181818 !important; } .theme-dark [class*="text-[#121A2B]"] { color:#ffffff !important; } .theme-dark [class*="text-[#374151]"] { color:#e5e5e5 !important; } .theme-dark [class*="text-[#6B7280]"] { color:#a3a3a3 !important; } .theme-dark [class*="border-[#E5E9F2]"] { border-color:#292929 !important; } .theme-dark input, .theme-dark textarea { background:#111111 !important; color:#ffffff !important; border-color:#292929 !important; } .theme-dark .bg\\[\\#F5F7FB\\] { background:#0A0E1A !important; } .theme-dark .bg-white { background:#151B2E !important; } .theme-dark .bg\\[\\#E8ECFF\\] { background:#1E2A4A !important; } .theme-dark .text\\[\\#121A2B\\] { color:#fff !important; } .theme-dark .text\\[\\#6B7280\\] { color:#9CA3AF !important; } .theme-dark .border\\[\\#E5E9F2\\] { border-color:#2A3348 !important; } .theme-dark .shadow-\\[0_4px_20px_rgba\\(18\\,26\\,43\\,\\.06\\)\\] { box-shadow:0 4px 20px rgba(0,0,0,.25) !important; } .theme-dark input,.theme-dark textarea { background:#151B2E !important; color:#fff !important; border-color:#2A3348 !important; } .theme-dark .theme-surface { background:#151B2E !important; }`}</style>
+    <div className="mx-auto min-h-screen w-full max-w-[430px] bg-[#F5F7FB] shadow-[0_0_60px_rgba(18,26,43,.08)] transition-colors duration-300">
+      {currentScreen === 'login' && <LoginScreen onContinue={() => openEmailAuth('sign-in')} onSignUp={() => openEmailAuth('sign-up')} onGoogle={() => handleOAuth('google')} onApple={() => handleOAuth('apple')} />}
+      {currentScreen === 'empty-dashboard' && <EmptyDashboard onAlias={() => go('alias-reveal')} onManual={() => setShowAddModal(true)} onSettings={() => go('settings')} />}
+      {currentScreen === 'alias-reveal' && <AliasReveal onOpenEmail={() => go('syncing')} onLater={openDashboard} />}
+      {currentScreen === 'syncing' && <SyncingScreen onDone={finishSync} />}
+      {currentScreen === 'dashboard' && <Dashboard subscriptions={subscriptions} onAdd={() => setShowAddModal(true)} onTrials={() => go('trials')} onSettings={() => go('settings')} />}
+      {currentScreen === 'trials' && <TrialsScreen subscriptions={subscriptions} hasActiveTrials={hasActiveTrials} onEmpty={() => setHasActiveTrials(false)} onBack={openDashboard} onAdd={() => setShowAddModal(true)} onEscape={() => setShowEscapeRoute(true)} onSettings={() => go('settings')} />}
+      {currentScreen === 'settings' && <SettingsScreen theme={theme} setTheme={changeTheme} isPro={isPro} onDashboard={openDashboard} onTrials={() => go('trials')} onUpgrade={() => go('pro-upgrade')} notify={notify} />}
+      {currentScreen === 'pro-upgrade' && <ProUpgrade selectedPlan={selectedPlan} setSelectedPlan={setSelectedPlan} onClose={() => go('settings')} onStarted={() => { setIsPro(true); go('settings'); notify('Pro is now active!') }} />}
+      {showAddModal && <ManualAddModal onClose={() => setShowAddModal(false)} onSave={async (subscription) => { const { data: user } = await supabase.auth.getUser(); if (!user.user) return; const { data: row, error } = await supabase.from('subscriptions').insert({ user_id: user.user.id, name: subscription.name.trim(), price: subscription.price, next_bill: subscription.nextBill, is_trial: subscription.isTrial, hours_left: subscription.hoursLeft ?? null }).select('id, name, price, next_bill, is_trial, hours_left, notes').single(); if (error || !row) { notify('Could not save that subscription'); return } setSubscriptions((items) => [...items, { id: row.id, name: row.name, price: Number(row.price), nextBill: row.next_bill, isTrial: row.is_trial, hoursLeft: row.hours_left ?? undefined }]); setShowAddModal(false); notify('Added to your tracker') }} />}
+      {showEscapeRoute && <EscapeRoute onClose={() => setShowEscapeRoute(false)} onBack={() => { setShowEscapeRoute(false); setHasActiveTrials(false); notify('You just saved $54.99!') }} />}
+      {showEmailAuth && <EmailAuthModal supabase={supabase} initialMode={emailAuthMode} onClose={() => setShowEmailAuth(false)} onSuccess={handleEmailAuth} />}
+      {toast && <div role="status" className="fixed bottom-5 left-1/2 z-[70] -translate-x-1/2 rounded-full bg-[#121A2B] px-4 py-3 text-sm font-semibold text-white shadow-xl">{toast}</div>}
+    </div>
+  </div>
 }
+
+function GoogleBrandIcon() { return <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5"><path fill="#4285F4" d="M21.35 12.27c0-.7-.06-1.37-.18-2.02H12v3.82h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.7 2.91-4.2 2.91-7.19Z" /><path fill="#34A853" d="M12 21.6c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.92-3.31.92-2.55 0-4.71-1.72-5.49-4.04H3.27v2.53A9.74 9.74 0 0 0 12 21.6Z" /><path fill="#FBBC05" d="M6.51 13.67a5.86 5.86 0 0 1 0-3.34V7.8H3.27a9.74 9.74 0 0 0 0 8.4l3.24-2.53Z" /><path fill="#EA4335" d="M12 6.29c1.43 0 2.71.49 3.72 1.46l2.79-2.79C16.84 3.36 14.63 2.4 12 2.4a9.74 9.74 0 0 0-8.73 5.4l3.24 2.53c.78-2.32 2.94-4.04 5.49-4.04Z" /></svg> }
+function AppleBrandIcon() { return <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 fill-current"><path d="M17.05 12.54c-.02-2.36 1.93-3.5 2.02-3.55a4.34 4.34 0 0 0-3.42-1.85c-1.45-.15-2.86.87-3.6.87-.75 0-1.9-.85-3.12-.83a4.6 4.6 0 0 0-3.87 2.36c-1.67 2.9-.42 7.18 1.18 9.53.8 1.15 1.73 2.44 2.97 2.39 1.2-.05 1.65-.77 3.1-.77 1.45 0 1.86.77 3.11.74 1.3-.02 2.1-1.16 2.88-2.32a9.52 9.52 0 0 0 1.3-2.68 4.14 4.14 0 0 1-2.55-3.89ZM14.67 5.59a4.2 4.2 0 0 0 .96-3.03 4.28 4.28 0 0 0-2.77 1.43 4 4 0 0 0-.99 2.91 3.53 3.53 0 0 0 2.8-1.31Z" /></svg> }
+
+function EmailAuthModal({ supabase, initialMode, onClose, onSuccess }: { supabase: ReturnType<typeof createClient>; initialMode: 'sign-in' | 'sign-up'; onClose: () => void; onSuccess: (email: string) => void }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [mode, setMode] = useState<'sign-in' | 'sign-up'>(initialMode)
+  const [error, setError] = useState('')
+  const [needsConfirmation, setNeedsConfirmation] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const submit = async (event: FormEvent) => {
+    event.preventDefault(); setError(''); setNeedsConfirmation(false)
+    const normalizedEmail = email.trim().toLowerCase()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) { setError('Enter a complete email address, such as name@gmail.com.'); return }
+    if (password.length < 6) { setError('Use a password with at least 6 characters.'); return }
+    setBusy(true)
+    const result = mode === 'sign-in' ? await supabase.auth.signInWithPassword({ email: normalizedEmail, password }) : await supabase.auth.signUp({ email: normalizedEmail, password, options: { emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ?? `${window.location.origin}/auth/callback` } })
+    setBusy(false)
+    if (result.error) {
+      const message = result.error.message.toLowerCase()
+      const unconfirmed = message.includes('confirm') || message.includes('not verified')
+      setNeedsConfirmation(unconfirmed)
+      if (unconfirmed) setError('Your email is not confirmed yet.')
+      else if (mode === 'sign-up') setError(message.includes('already') ? 'An account already exists for this email. Sign in instead.' : 'Could not create your account. Use a valid email and a password with at least 6 characters.')
+      else setError('Invalid email or password. If you are new to SubShield, create an account below.')
+      return
+    }
+    if (mode === 'sign-up' && !result.data.session) { setError('Check your email to confirm your account.'); return }
+    onSuccess(normalizedEmail)
+  }
+  return <div className="fixed inset-0 z-[80] flex items-end bg-black/50 p-0 sm:items-center sm:justify-center sm:p-5"><form onSubmit={submit} className="w-full rounded-t-3xl bg-white p-5 sm:max-w-[380px] sm:rounded-3xl"><div className="flex items-center justify-between"><div><h2 className="text-xl font-bold">{mode === 'sign-in' ? 'Welcome back' : 'Create your account'}</h2><p className="mt-1 text-sm text-[#6B7280]">Use email and password to continue.</p></div><button type="button" onClick={onClose} aria-label="Close" className="rounded-full bg-[#F5F7FB] p-2"><X className="size-5" /></button></div><label className="mt-6 block text-sm font-semibold">Email<input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-2 h-12 w-full rounded-xl border border-[#E5E9F2] px-3" /></label><label className="mt-4 block text-sm font-semibold">Password<input required minLength={6} type="password" value={password} onChange={(event) => setPassword(event.target.value)} className="mt-2 h-12 w-full rounded-xl border border-[#E5E9F2] px-3" /></label>{error && <div role="alert" className="mt-3 text-sm text-[#B33226]"><p>{error}</p>{needsConfirmation && <button type="button" onClick={async () => { setBusy(true); const { error: resendError } = await supabase.auth.resend({ type: 'signup', email }); setBusy(false); setError(resendError ? 'We could not resend the confirmation email.' : 'Confirmation email sent. Check your inbox.'); }} className="mt-2 block font-semibold underline">Resend confirmation email</button>}{mode === 'sign-in' && !needsConfirmation && <button type="button" onClick={() => { setMode('sign-up'); setError('') }} className="mt-2 block font-semibold text-[#2F5BFF] underline">Create an account instead</button>}</div>}<button disabled={busy} className="mt-5 h-12 w-full rounded-xl bg-[#2F5BFF] font-semibold text-white disabled:opacity-60">{busy ? 'Please wait...' : mode === 'sign-in' ? 'Sign in' : 'Create account'}</button><button type="button" onClick={() => setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in')} className="mt-4 w-full text-sm font-semibold text-[#2F5BFF]">{mode === 'sign-in' ? 'New to SubShield? Create an account' : 'Already have an account? Sign in'}</button></form></div>
+}
+
+function LoginScreen({ onContinue, onSignUp, onGoogle, onApple }: { onContinue: () => void; onSignUp: () => void; onGoogle: () => void; onApple: () => void }) {
+  return <main className="flex min-h-screen flex-col justify-center px-6 py-12">
+    <div className="mx-auto w-full max-w-[360px] text-center"><div className="mx-auto flex size-20 items-center justify-center rounded-[24px] border-2 border-[#2F5BFF] bg-[#E8ECFF] text-[#2F5BFF]"><ShieldCheck className="size-10" /></div><h1 className="mt-7 text-[30px] font-bold leading-tight tracking-[-.04em]">Track your subscriptions.<br />Keep your bank data private.</h1><p className="mt-4 text-base text-[#6B7280]">No bank linking. No stress.</p><div className="mt-8 flex flex-col gap-3"><button onClick={onContinue} className="flex h-14 items-center justify-center gap-3 rounded-xl bg-[#2F5BFF] font-semibold text-white shadow-[0_8px_18px_rgba(47,91,255,.22)] transition hover:bg-[#244bd9]"><Mail className="size-5" />Continue with Email</button><button onClick={onGoogle} className="flex h-14 items-center justify-center gap-3 rounded-xl border border-[#E5E9F2] bg-white font-semibold shadow-[0_4px_20px_rgba(18,26,43,.06)]"><GoogleBrandIcon /><span>Continue with Google</span></button><button onClick={onApple} className="flex h-14 items-center justify-center gap-3 rounded-xl border border-[#E5E9F2] bg-white font-semibold shadow-[0_4px_20px_rgba(18,26,43,.06)]"><AppleBrandIcon />Continue with Apple</button></div><button type="button" onClick={onSignUp} className="mt-5 w-full text-sm font-semibold text-[#2F5BFF]">New user? Sign up with email</button><p className="mt-7 flex items-center justify-center gap-2 text-xs text-[#6B7280]"><LockKeyhole className="size-4 text-[#12B886]" />We will NEVER ask for your bank password.</p></div>
+  </main>
+}
+
+function EmptyDashboard({ onAlias, onManual, onSettings }: { onAlias: () => void; onManual: () => void; onSettings: () => void }) {
+  return <AppShell active="dashboard" onDashboard={() => {}} onTrials={() => {}} onSettings={onSettings}><main className="px-5 pb-28 pt-8"><div className="rounded-2xl bg-white p-5 shadow-[0_4px_20px_rgba(18,26,43,.06)]"><p className="text-sm text-[#6B7280]">Welcome, Alex!</p><h1 className="mt-1 text-2xl font-bold">Your dashboard is empty.</h1><div className="mx-auto mt-6 flex size-36 items-center justify-center rounded-full bg-[#E8ECFF] text-[#2F5BFF]"><Inbox className="size-16" /></div></div><section className="mt-5 rounded-2xl bg-white p-5 shadow-[0_4px_20px_rgba(18,26,43,.06)]"><h2 className="font-bold">Let&apos;s get you protected</h2><div className="mt-5 flex flex-col gap-5">{[['1','Generate your private alias'],['2','Forward trial receipts'],['3','We alert you before renewals']].map(([number, text]) => <div key={number} className="flex items-center gap-3"><span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#2F5BFF] text-sm font-bold text-white">{number}</span><span className="text-sm text-[#374151]">{text}</span></div>)}</div><button onClick={onAlias} className="mt-6 h-12 w-full rounded-xl bg-[#2F5BFF] font-semibold text-white">Generate My Private Alias</button><button onClick={onManual} className="mt-4 w-full text-sm font-semibold text-[#2F5BFF]">Or add one manually</button></section></main></AppShell>
+}
+
+function AliasReveal({ onOpenEmail, onLater }: { onOpenEmail: () => void; onLater: () => void }) {
+  return <main className="flex min-h-screen flex-col justify-center px-5 py-10"><div className="text-center"><div className="mx-auto flex size-20 items-center justify-center rounded-full bg-[#D9F8EF] text-[#12B886]"><CheckCircle2 className="size-12" /></div><h1 className="mt-6 text-3xl font-bold">Your Private Alias is Ready!</h1><p className="mt-2 text-[#6B7280]">Use this email for trials and receipts.</p><div className="mt-8 rounded-2xl border-2 border-dashed border-[#2F5BFF] bg-white p-5"><p className="font-mono text-lg text-[#2F5BFF]">alex.trials@subshield.app</p><button onClick={() => navigator.clipboard?.writeText('alex.trials@subshield.app')} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[#2F5BFF] px-4 py-3 text-sm font-semibold text-[#2F5BFF]"><Copy className="size-4" />Copy Email Address</button></div><button onClick={onOpenEmail} className="mt-6 h-14 w-full rounded-xl bg-[#2F5BFF] font-semibold text-white">Open My Email App</button><button onClick={onLater} className="mt-5 text-sm text-[#6B7280] underline underline-offset-4">I&apos;ll do it later</button></div></main>
+}
+
+function SyncingScreen({ onDone }: { onDone: () => void }) {
+  const [step, setStep] = useState(0)
+  useEffect(() => { const timers = [setTimeout(() => setStep(1), 900), setTimeout(() => setStep(2), 1800), setTimeout(onDone, 3500)]; return () => timers.forEach(clearTimeout) }, [onDone])
+  return <main className="flex min-h-screen flex-col items-center justify-center px-5 text-center"><div className="relative flex size-48 items-center justify-center"><div className="absolute size-48 rounded-full border border-[#E8ECFF] animate-ping" /><div className="absolute size-36 rounded-full border-2 border-[#E8ECFF]" /><div className="absolute size-24 rounded-full border-2 border-[#2F5BFF]/40" /><div className="relative flex size-14 items-center justify-center rounded-full bg-[#2F5BFF] text-white shadow-[0_0_30px_rgba(47,91,255,.35)]"><Mail className="size-7" /></div></div><h1 className="mt-9 text-2xl font-bold">{step > 0 ? 'Email detected! Extracting data...' : 'Listening for your email...'}</h1><p className="mt-2 text-[#6B7280]">Keep this screen open while we scan your private alias.</p><div className="mt-8 w-full max-w-[350px] rounded-2xl bg-white p-5 text-left shadow-[0_4px_20px_rgba(18,26,43,.06)]">{['Connecting to your alias','Scanning recent receipts','Preparing your dashboard'].map((item, index) => <div key={item} className="flex items-center gap-3 py-2 text-sm"><span className={`flex size-6 items-center justify-center rounded-full ${step > index ? 'bg-[#12B886] text-white' : 'bg-[#E8ECFF] text-[#2F5BFF]'}`}>{step > index ? <Check className="size-4" /> : index + 1}</span>{item}</div>)}</div></main>
+}
+
+function Dashboard({ subscriptions, onAdd, onTrials, onSettings }: { subscriptions: Subscription[]; onAdd: () => void; onTrials: () => void; onSettings: () => void }) {
+  const safeSubscriptions = Array.isArray(subscriptions) ? subscriptions : []
+  const total = safeSubscriptions.filter((item) => !item.isTrial).reduce((sum, item) => sum + item.price, 0)
+  return <AppShell active="dashboard" onDashboard={() => {}} onTrials={onTrials} onSettings={onSettings}><main className="px-5 pb-28 pt-8"><div className="rounded-2xl bg-white p-5 shadow-[0_4px_20px_rgba(18,26,43,.06)]"><p className="text-sm text-[#6B7280]">Total Monthly Spend</p><p className="mt-1 text-4xl font-bold">${total.toFixed(2)}<span className="text-base font-medium text-[#6B7280]"> / month</span></p><span className="mt-3 inline-flex rounded-full bg-[#D9F8EF] px-3 py-1 text-xs font-bold text-[#087F5B]">↓ $12 saved this month</span></div><div className="mt-4 flex items-center gap-2 rounded-xl bg-[#D9F8EF] px-4 py-3 text-sm font-semibold text-[#087F5B]"><CheckCircle2 className="size-5" />Netflix receipt synced successfully.</div><div className="mt-5 flex flex-col gap-3">{safeSubscriptions.length > 0 ? safeSubscriptions.map((item) => <SubscriptionRow key={item.id} item={item} />) : <div className="rounded-2xl bg-white py-8 text-center"><ShieldCheck className="mx-auto size-10 text-emerald-500" /><h3 className="mt-3 font-bold">No subscriptions yet</h3><p className="mx-auto mt-1 max-w-[260px] text-sm text-[#6B7280]">Forward your first receipt to your private alias, or add one manually.</p></div>}</div><button aria-label="Add subscription" onClick={onAdd} className="fixed bottom-20 right-5 z-20 flex size-14 items-center justify-center rounded-full bg-[#2F5BFF] text-white shadow-[0_8px_24px_rgba(47,91,255,.3)] transition hover:scale-105"><Plus className="size-6" /></button></main></AppShell>
+}
+
+function BrandLogo({ name }: { name: string }) {
+  if (name === 'Netflix') return <svg aria-label="Netflix logo" viewBox="0 0 24 24" className="size-7 fill-white"><path d="M3.5 3h3.1l5.8 10.2V3h3v18h-3.1L6.5 10.8V21h-3V3Zm11.1 0h3v18h-3V3Z" /></svg>
+  if (name === 'Spotify') return <svg aria-label="Spotify logo" viewBox="0 0 24 24" className="size-7 fill-white"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.58 14.45a.75.75 0 0 1-1.03.25c-2.82-1.72-6.37-2.1-10.55-1.15a.75.75 0 1 1-.3-1.47c4.58-.94 8.5-.5 11.64 1.42.35.22.46.68.24 1.03Zm1.38-3.06a.94.94 0 0 1-1.29.31c-3.23-1.98-8.15-2.55-11.97-1.39a.94.94 0 1 1-.55-1.79c4.36-1.32 9.79-.68 13.5 1.6.44.27.58.85.31 1.27Zm.12-3.2C14.2 7.94 7.2 7.7 3.03 8.96a1.13 1.13 0 1 1-.65-2.16c4.8-1.46 12.75-1.16 17.63 1.74a1.13 1.13 0 0 1-1.16 1.65Z" /></svg>
+  if (name === 'Adobe CC') return <svg aria-label="Adobe logo" viewBox="0 0 24 24" className="size-7 fill-white"><path d="M3 3h7.5L15 21h-3.4l-1.35-4.5H6.7L5.4 21H3V3Zm4.55 3.8-1.75 6.5h3.5l-1.75-6.5ZM15 3h6v18h-3.1V7.2L15 3Z" /></svg>
+  return <span aria-hidden="true" className="text-sm font-bold text-white">{name.slice(0, 1)}</span>
+}
+
+function SubscriptionRow({ item }: { item: Subscription }) { return <div className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-[0_4px_20px_rgba(18,26,43,.06)]"><span className={`flex size-11 items-center justify-center rounded-full text-sm font-bold text-white ${colors[item.name] || 'bg-[#2F5BFF]'}`}><BrandLogo name={item.name} /></span><div className="min-w-0 flex-1"><p className="truncate font-semibold">{item.name}</p><p className="mt-1 text-xs text-[#6B7280]">Next bill: {item.nextBill}</p></div><div className="text-right"><p className="font-bold">${item.price.toFixed(2)}</p><span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${item.isTrial ? 'bg-[#FFF3D6] text-[#A15C00]' : 'bg-[#D9F8EF] text-[#087F5B]'}`}>{item.isTrial ? 'Free Trial' : 'Active'}</span></div></div> }
+
+function TrialsScreen({ subscriptions, hasActiveTrials, onEmpty, onBack, onAdd, onEscape, onSettings }: { subscriptions: Subscription[]; hasActiveTrials: boolean; onEmpty: () => void; onBack: () => void; onAdd: () => void; onEscape: () => void; onSettings: () => void }) {
+  if (!hasActiveTrials || !Array.isArray(subscriptions) || subscriptions.filter((item) => item.isTrial).length === 0) return <AppShell active="trials" onDashboard={onBack} onTrials={() => {}} onSettings={onSettings}><main className="px-5 pb-28 pt-8"><div className="rounded-2xl bg-white p-6 text-center shadow-[0_4px_20px_rgba(18,26,43,.06)]"><div className="mx-auto flex size-28 items-center justify-center rounded-full bg-[#D9F8EF] text-[#12B886]"><ShieldCheck className="size-16" /></div><h1 className="mt-6 text-3xl font-bold">You&apos;re all clear!</h1><p className="mt-2 text-[#6B7280]">No trials ending soon.</p><div className="mt-8 rounded-2xl bg-[#F5F7FB] p-5 text-left"><p className="text-sm text-[#6B7280]">Total Saved This Month</p><p className="mt-1 text-3xl font-bold text-[#2F5BFF]">$127.97</p><p className="mt-1 text-xs text-[#6B7280]">From 3 canceled trials</p></div><button onClick={onAdd} className="mt-6 h-12 w-full rounded-xl bg-[#2F5BFF] font-semibold text-white">Track a New Trial</button><button onClick={onBack} className="mt-4 text-sm text-[#6B7280] underline">Back to Dashboard</button></div></main></AppShell>
+  const trials = (Array.isArray(subscriptions) ? subscriptions : []).filter((item) => item.isTrial)
+  return <AppShell active="trials" onDashboard={onBack} onTrials={() => {}} onSettings={onSettings}><main className="px-5 pb-28 pt-8"><div className="rounded-2xl bg-white p-5 shadow-[0_4px_20px_rgba(18,26,43,.06)]"><p className="text-sm text-[#6B7280]">Total at Risk</p><p className="mt-1 text-4xl font-bold text-[#E04A3A]">$54.99</p><p className="mt-1 text-sm text-[#6B7280]">charged in the next 48 hours</p></div><div className="mt-5 flex gap-2 overflow-x-auto"><span className="rounded-full bg-[#FFE5E1] px-4 py-2 text-xs font-bold text-[#B33226]">Critical</span><span className="rounded-full bg-[#FFF3D6] px-4 py-2 text-xs font-bold text-[#A15C00]">Warning</span><span className="rounded-full bg-[#D9F8EF] px-4 py-2 text-xs font-bold text-[#087F5B]">Safe</span></div><div className="mt-5 flex flex-col gap-3">{Array.isArray(trials) && trials.length > 0 ? trials.map((item) => <div key={item.id} className={`overflow-hidden rounded-2xl border-l-4 bg-white p-4 shadow-[0_4px_20px_rgba(18,26,43,.06)] ${item.name === 'Hulu' ? 'border-[#12B886]' : item.name === 'Amazon Prime' ? 'border-[#F59F00]' : 'border-[#E04A3A]'}`}><div className="flex items-center gap-3"><span className={`flex size-10 items-center justify-center rounded-full text-sm font-bold text-white ${colors[item.name] || 'bg-[#2F5BFF]'}`}><BrandLogo name={item.name} /></span><div className="flex-1"><p className="font-semibold">{item.name}</p><p className={`mt-1 text-xs ${item.name === 'Hulu' ? 'text-[#12B886]' : item.name === 'Amazon Prime' ? 'text-[#F59F00]' : 'text-[#E04A3A]'}`}>{item.name === 'Adobe CC' ? 'Trial ends in 2 days!' : item.name === 'Amazon Prime' ? 'Trial ends in 2 days' : 'Trial ends in 5 days'}</p></div><span className={`font-mono text-sm font-bold ${item.name === 'Hulu' ? 'text-[#12B886]' : item.name === 'Amazon Prime' ? 'text-[#F59F00]' : 'text-[#E04A3A]'}`}>{item.name === 'Adobe CC' ? '14:32:08' : item.name === 'Amazon Prime' ? '2d 08h' : '5d 12h'}</span></div><button onClick={onEscape} className="mt-4 rounded-xl bg-[#FFE5E1] px-3 py-2 text-xs font-bold text-[#B33226]">Get Escape Route</button></div>) : <div className="rounded-2xl bg-white py-8 text-center"><ShieldCheck className="mx-auto size-10 text-emerald-500" /><h3 className="mt-3 font-bold">No active trials</h3><p className="mx-auto mt-1 max-w-[260px] text-sm text-[#6B7280]">You&apos;re all clear. Add a trial to keep it protected.</p></div>}</div><button onClick={onEmpty} className="mt-6 text-xs text-[#6B7280] underline">Demo: Show All Clear</button></main></AppShell>
+}
+
+function SettingsScreen({ theme, setTheme, isPro, onDashboard, onTrials, onUpgrade, notify }: { theme: Theme; setTheme: (theme: Theme) => void; isPro: boolean; onDashboard: () => void; onTrials: () => void; onUpgrade: () => void; notify: (message: string) => void }) { return <AppShell active="settings" onDashboard={onDashboard} onTrials={onTrials} onSettings={() => {}}><main className="px-5 pb-28 pt-8"><h1 className="text-3xl font-bold">Settings</h1><p className="mt-1 text-sm text-[#6B7280]">Manage your account and preferences</p><div className="mt-6 flex flex-col gap-4"><SettingsCard title="My Private Alias" icon={<LockKeyhole className="size-5" />}><p className="font-mono text-sm text-[#2F5BFF]">alex.trials@subshield.app</p><p className="mt-2 text-xs text-[#6B7280]">Forward receipts and trial confirmations here</p><div className="mt-4 flex gap-2"><button onClick={() => { navigator.clipboard?.writeText('alex.trials@subshield.app'); notify('Alias copied!') }} className="rounded-xl border border-[#2F5BFF] px-3 py-2 text-xs font-bold text-[#2F5BFF]">Copy</button><button onClick={() => notify('New alias generated')} className="rounded-xl border border-[#E5E9F2] px-3 py-2 text-xs font-bold">Regenerate</button></div></SettingsCard><SettingsCard title="Notification Preferences" icon={<Zap className="size-5" />}><Toggle label="Push Notifications" checked /><Toggle label="SMS Alerts" /><Toggle label="Email Digest" checked /><Toggle label="Escalation Alerts" /></SettingsCard><SettingsCard title="Connected Accounts" icon={<Link2 className="size-5" />}><AccountRow name="Gmail" connected /><AccountRow name="Outlook" /></SettingsCard><SettingsCard title="Preferences" icon={<Settings className="size-5" />}><PrefRow label="Language" value="English" /><PrefRow label="Currency" value="USD ($)" /><PrefRow label="Time Zone" value="Auto-detect" /></SettingsCard><SettingsCard title="Appearance" icon={<Sparkles className="size-5" />}><div className="flex items-center justify-between"><div><p className="text-sm font-semibold">Theme</p><p className="mt-1 text-xs text-[#6B7280]">Choose your preferred look</p></div><div className="flex rounded-xl bg-[#F5F7FB] p-1"><button onClick={() => setTheme('light')} className={`rounded-lg px-3 py-2 text-xs font-bold ${theme === 'light' ? 'bg-white text-[#2F5BFF] shadow-sm' : 'text-[#6B7280]'}`}>☀️ Light</button><button onClick={() => setTheme('dark')} className={`rounded-lg px-3 py-2 text-xs font-bold ${theme === 'dark' ? 'bg-[#151B2E] text-[#4F7CFF] shadow-sm' : 'text-[#6B7280]'}`}>🌙 Dark</button></div></div></SettingsCard><SettingsCard title="Account" icon={<ShieldCheck className="size-5" />}><div className="flex items-center justify-between border-b border-[#E5E9F2] py-3"><div><p className="text-sm font-semibold">Subscription Plan</p><p className="mt-1 text-xs text-[#6B7280]">{isPro ? 'Pro' : 'Free'}</p></div>{isPro ? <span className="rounded-full bg-[#FFF3D6] px-3 py-1 text-xs font-bold text-[#A15C00]">Pro</span> : <button onClick={onUpgrade} className="rounded-xl bg-[#2F5BFF] px-3 py-2 text-xs font-bold text-white">Upgrade to Pro</button>}</div><PrefRow label="Export Data" value="Download all your data" /><button onClick={() => notify('Delete request submitted')} className="flex w-full items-center justify-between py-3 text-left text-[#E04A3A]"><span><p className="text-sm font-semibold">Delete Account</p><p className="mt-1 text-xs text-[#6B7280]">Permanently delete your account</p></span><Trash2 className="size-4" /></button></SettingsCard></div><footer className="py-7 text-center text-xs text-[#6B7280]">SubShield v1.0.0<br /><span className="leading-8">Privacy Policy &nbsp;|&nbsp; Terms of Service &nbsp;|&nbsp; Contact Support</span></footer></main></AppShell> }
+
+function SettingsCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) { return <section className="rounded-2xl bg-white p-4 shadow-[0_4px_20px_rgba(18,26,43,.06)]"><div className="mb-4 flex items-center gap-2 font-bold"><span className="text-[#2F5BFF]">{icon}</span>{title}</div>{children}</section> }
+function Toggle({ label, checked: initial = false }: { label: string; checked?: boolean }) { const [checked, setChecked] = useState(initial); return <button onClick={() => setChecked(!checked)} role="switch" aria-checked={checked} className="flex w-full items-center justify-between border-b border-[#E5E9F2] py-3 text-left last:border-0"><span className="text-sm">{label}</span><span className={`relative h-6 w-11 rounded-full p-1 transition ${checked ? 'bg-[#2F5BFF]' : 'bg-[#D7DCE7]'}`}><span className={`block size-4 rounded-full bg-white transition ${checked ? 'translate-x-5' : ''}`} /></span></button> }
+function AccountRow({ name, connected = false }: { name: string; connected?: boolean }) { return <div className="flex items-center gap-3 border-b border-[#E5E9F2] py-3 last:border-0"><span className={`flex size-9 items-center justify-center rounded-full text-xs font-bold text-white ${name === 'Gmail' ? 'bg-[#EA4335]' : 'bg-[#64748B]'}`}>{name === 'Gmail' ? <Mail className="size-4" /> : name[0]}</span><div className="flex-1"><p className="text-sm font-semibold">{name}</p><p className={`text-xs ${connected ? 'text-[#12B886]' : 'text-[#6B7280]'}`}>{connected ? 'Connected' : 'Not connected'}</p></div><button className={`rounded-xl border px-3 py-2 text-xs font-bold ${connected ? 'border-[#E5E9F2]' : 'border-[#2F5BFF] text-[#2F5BFF]'}`}>{connected ? 'Disconnect' : 'Connect'}</button></div> }
+function PrefRow({ label, value }: { label: string; value: string }) { return <div className="flex items-center justify-between border-b border-[#E5E9F2] py-3 last:border-0"><div><p className="text-sm font-semibold">{label}</p><p className="mt-1 text-xs text-[#6B7280]">{value}</p></div><ChevronRight className="size-4 text-[#6B7280]" /></div> }
+
+function ProUpgrade({ selectedPlan, setSelectedPlan, onClose, onStarted }: { selectedPlan: 'monthly' | 'yearly'; setSelectedPlan: (plan: 'monthly' | 'yearly') => void; onClose: () => void; onStarted: () => void }) { const [faq, setFaq] = useState<number | null>(0); const [success, setSuccess] = useState(false); const start = () => { setSuccess(true); window.setTimeout(onStarted, 3000) }; return <main className="min-h-screen bg-[#121A2B] px-5 pb-32 pt-8 text-white"><button onClick={onClose} aria-label="Close Pro upgrade" className="float-right rounded-full bg-white/10 p-2"><X className="size-5" /></button><div className="clear-both flex flex-col items-center text-center"><div className="flex size-20 items-center justify-center rounded-full bg-[#C9A227]/15 text-[#C9A227] shadow-[0_0_45px_rgba(201,162,39,.3)]"><Crown className="size-10" /></div><h1 className="mt-5 text-3xl font-bold">Unlock SubShield Pro</h1><p className="mt-2 text-white/60">Take your subscription management to the next level</p><div className="mt-6 rounded-full border border-[#C9A227]/50 bg-[#C9A227]/10 px-4 py-2 text-sm text-[#F5D76E]">Join 10,000+ users · 4.9★</div></div><section className="mt-8"><h2 className="text-lg font-bold">Everything you need to stay protected</h2><div className="mt-3 rounded-2xl border border-white/10 bg-white/[.06]">{['Unlimited tracking','SMS & escalation alerts','AI-powered receipt scanning','Priority cancellation support','Ad-free experience','Advanced analytics & reports'].map((item) => <div key={item} className="flex items-center gap-3 border-b border-white/10 p-4 last:border-0"><Check className="size-5 text-[#12B886]" /><span className="text-sm">{item}</span></div>)}</div></section><div className="mt-8 grid grid-cols-2 gap-3"><button onClick={() => setSelectedPlan('monthly')} className={`rounded-2xl border p-4 text-left ${selectedPlan === 'monthly' ? 'border-[#C9A227] bg-white/10' : 'border-white/15'}`}><p>Monthly</p><p className="mt-3 text-2xl font-bold">$4.99<span className="text-sm font-normal text-white/60">/mo</span></p></button><button onClick={() => setSelectedPlan('yearly')} className={`relative rounded-2xl border p-4 text-left ${selectedPlan === 'yearly' ? 'border-[#C9A227] bg-[#C9A227]/10' : 'border-white/15'}`}><span className="absolute -top-3 left-3 rounded-full bg-[#C9A227] px-2 py-1 text-[10px] font-bold text-[#121A2B]">BEST VALUE</span><p>Yearly</p><p className="mt-3 text-2xl font-bold">$29.99<span className="text-sm font-normal text-white/60">/yr</span></p><p className="mt-2 text-xs text-[#12B886]">Save 50%</p></button></div><section className="mt-6 rounded-2xl border border-white/10 bg-white/[.06] p-4"><p className="text-2xl text-white/50">&quot;</p><p className="text-sm italic">SubShield Pro saved me $240 in the first month.</p><p className="mt-3 text-xs text-white/60">- Sarah K., Verified User</p><p className="mt-2 text-[#F5D76E]">★★★★★</p></section><section className="mt-6"><h2 className="text-lg font-bold">Frequently asked questions</h2>{[['Can I cancel anytime?','Yes, cancel anytime from Settings.'],['What payment methods do you accept?','All major credit cards, Apple Pay, and Google Pay.'],['Is my data secure?','All data is encrypted and we never access bank accounts.']].map(([q,a], index) => <div key={q} className="border-b border-white/10"><button onClick={() => setFaq(faq === index ? null : index)} className="flex w-full items-center justify-between py-4 text-left text-sm"><span>{q}</span><ChevronDown className={`size-4 transition ${faq === index ? 'rotate-180 text-[#F5D76E]' : ''}`} /></button>{faq === index && <p className="pb-4 text-xs text-white/60">{a}</p>}</div>)}</section><div className="fixed bottom-0 left-1/2 z-20 w-full max-w-[430px] -translate-x-1/2 border-t border-white/10 bg-[#121A2B]/95 px-5 pb-5 pt-3 backdrop-blur-xl"><button onClick={start} className="h-14 w-full rounded-xl bg-[#C9A227] font-bold text-[#121A2B]">Start 7-Day Free Trial</button><p className="mt-2 text-center text-xs text-white/60">Cancel anytime. You won&apos;t be charged for 7 days.</p></div>{success && <div className="fixed inset-0 z-30 flex items-center justify-center bg-[#121A2B]/80 p-5"><div className="rounded-2xl bg-white p-6 text-center text-[#121A2B]"><CheckCircle2 className="mx-auto size-12 text-[#12B886]" /><h2 className="mt-3 text-xl font-bold">Welcome to Pro!</h2><p className="mt-2 text-sm text-[#6B7280]">Your 7-day trial has started.</p></div></div>}</main> }
+
+function EscapeRoute({ onClose, onBack }: { onClose: () => void; onBack: () => void }) { const [checked, setChecked] = useState(false); const [completed, setCompleted] = useState(false); return <div className="fixed inset-0 z-50 flex items-end bg-black/40"><section className="max-h-[90svh] w-full overflow-y-auto rounded-t-3xl bg-white px-5 pb-8 pt-5"><div className="mx-auto mb-5 h-1 w-10 rounded-full bg-[#D7DCE7]" /><button onClick={onClose} aria-label="Close escape route" className="float-right rounded-full bg-[#F5F7FB] p-2"><X className="size-5" /></button><div className="flex items-center gap-3"><span className="flex size-11 items-center justify-center rounded-full bg-[#EB1000] text-lg font-bold text-white">A</span><div><h2 className="font-bold">How to Cancel Adobe Creative Cloud</h2><span className="mt-1 inline-flex rounded-full bg-[#FFE5E1] px-2 py-1 text-[10px] font-bold text-[#B33226]">Hard – Requires Email</span></div></div><div className="mt-6 rounded-2xl border border-[#2F5BFF] p-4"><p className="font-semibold">Direct Cancellation Link</p><button onClick={() => window.open('https://account.adobe.com/plans', '_blank', 'noopener,noreferrer')} className="mt-3 rounded-xl bg-[#2F5BFF] px-4 py-3 text-sm font-bold text-white">Open Cancellation Page</button></div><div className="mt-4 rounded-2xl bg-[#E8ECFF] p-4"><p className="font-semibold">Email template</p><p className="mt-3 whitespace-pre-wrap font-mono text-xs leading-5 text-[#374151]">Subject: Cancel my Adobe Creative Cloud plan{`\n\n`}Hello Adobe Support,{`\n`}Please cancel my Creative Cloud subscription associated with this email.{`\n\n`}Thank you.</p><button onClick={() => { navigator.clipboard?.writeText('Subject: Cancel my Adobe Creative Cloud plan'); window.location.href = 'mailto:support@adobe.com?subject=Cancel%20my%20Adobe%20Creative%20Cloud%20plan' }} className="mt-3 rounded-xl bg-white px-3 py-2 text-xs font-bold text-[#2F5BFF]"><Clipboard className="mr-1 inline size-4" />Copy Template & Open Email</button></div><label className="mt-5 flex items-center gap-3 text-sm"><input type="checkbox" checked={checked} onChange={(event) => { setChecked(event.target.checked); setCompleted(event.target.checked) }} className="size-5 accent-[#2F5BFF]" />I have successfully canceled</label>{completed && <div className="mt-5 rounded-2xl bg-[#D9F8EF] p-4 text-center"><CheckCircle2 className="mx-auto size-9 text-[#12B886]" /><p className="mt-2 font-bold text-[#087F5B]">You just saved $54.99!</p><button onClick={onBack} className="mt-3 rounded-xl bg-[#2F5BFF] px-4 py-3 text-sm font-bold text-white">Back to Dashboard</button></div>}</section></div> }
+
+function ManualAddModal({ onClose, onSave }: { onClose: () => void; onSave: (subscription: Subscription) => void }) { const [name, setName] = useState(''); const [price, setPrice] = useState(''); const [date, setDate] = useState(''); const [plan, setPlan] = useState<'Monthly' | 'Yearly' | 'Weekly'>('Monthly'); const [notes, setNotes] = useState(''); const [error, setError] = useState(''); const suggestions = ['Netflix','Spotify','Adobe','Amazon','Apple','YouTube']; const save = () => { if (!name.trim() || !price || Number(price) <= 0 || !date) { setError('Please complete the service, price, and billing date.'); return } onSave({ id: Date.now(), name: name.trim(), price: Number(price), nextBill: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), isTrial: false }) }; return <div className="fixed inset-0 z-50 flex items-end bg-black/40"><section className="max-h-[90svh] w-full overflow-y-auto rounded-t-3xl bg-white px-5 pb-8 pt-5"><div className="mx-auto mb-5 h-1 w-10 rounded-full bg-[#D7DCE7]" /><button onClick={onClose} aria-label="Close add subscription" className="float-right rounded-full bg-[#F5F7FB] p-2"><X className="size-5" /></button><h2 className="text-center text-xl font-bold">Add Subscription Manually</h2><p className="mt-1 text-center text-sm text-[#6B7280]">Track a subscription in seconds</p><div className="mt-6 flex flex-col gap-4"><label className="text-sm font-semibold">Service Name<input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Netflix, Spotify, Adobe" className="mt-2 h-12 w-full rounded-xl border border-[#E5E9F2] bg-[#F5F7FB] px-3 text-sm outline-none focus:border-[#2F5BFF]" /><span className="mt-2 flex flex-wrap gap-2">{suggestions.map((item) => <button type="button" key={item} onClick={() => setName(item)} className="rounded-full bg-[#E8ECFF] px-3 py-1.5 text-xs font-semibold text-[#2F5BFF]">{item}</button>)}</span></label><label className="text-sm font-semibold">Price<input value={price} onChange={(e) => setPrice(e.target.value)} inputMode="decimal" placeholder="$0.00" className="mt-2 h-12 w-full rounded-xl border border-[#E5E9F2] bg-[#F5F7FB] px-3 text-sm outline-none focus:border-[#2F5BFF]" /></label><div><p className="text-sm font-semibold">Billing Frequency</p><div className="mt-2 grid grid-cols-3 gap-2">{(['Monthly','Yearly','Weekly'] as const).map((item) => <button type="button" key={item} onClick={() => setPlan(item)} className={`rounded-xl border px-2 py-3 text-xs font-bold ${plan === item ? 'border-[#2F5BFF] bg-[#E8ECFF] text-[#2F5BFF]' : 'border-[#E5E9F2]'}`}>{item}</button>)}</div></div><label className="text-sm font-semibold">Next Billing Date<input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-2 h-12 w-full rounded-xl border border-[#E5E9F2] bg-[#F5F7FB] px-3 text-sm outline-none focus:border-[#2F5BFF]" /></label><label className="text-sm font-semibold">Notes (Optional)<textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="e.g., Family plan" className="mt-2 w-full resize-none rounded-xl border border-[#E5E9F2] bg-[#F5F7FB] p-3 text-sm outline-none focus:border-[#2F5BFF]" /></label>{error && <p className="text-sm text-[#E04A3A]">{error}</p>}<button onClick={save} className="h-14 rounded-xl bg-[#2F5BFF] font-bold text-white">Add Subscription</button><p className="text-center text-xs text-[#6B7280]">We&apos;ll alert you before it renews</p></div></section></div> }
+
+function AppShell({ active, onDashboard, onTrials, onSettings, children }: { active: 'dashboard' | 'trials' | 'settings'; onDashboard: () => void; onTrials: () => void; onSettings: () => void; children: React.ReactNode }) { return <div className="min-h-screen">{children}<nav aria-label="Main navigation" className="fixed bottom-0 left-1/2 z-30 flex w-full max-w-[430px] -translate-x-1/2 justify-around border-t border-[#E5E9F2] bg-white/95 px-4 py-3 shadow-[0_-4px_20px_rgba(18,26,43,.06)] backdrop-blur"><NavButton active={active === 'dashboard'} onClick={onDashboard} icon={<LayoutDashboard />} label="Dashboard" /><NavButton active={active === 'trials'} onClick={onTrials} icon={<ReceiptText />} label="Trials" /><NavButton active={active === 'settings'} onClick={onSettings} icon={<Settings />} label="Settings" /></nav></div> }
+function NavButton({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) { return <button onClick={onClick} className={`flex min-w-20 flex-col items-center gap-1 text-xs font-semibold ${active ? 'text-[#2F5BFF]' : 'text-[#6B7280]'}`}>{icon}<span>{label}</span></button> }
