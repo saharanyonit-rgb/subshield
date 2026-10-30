@@ -143,8 +143,12 @@ function EmailAuthModal({ supabase, initialMode, onClose, onSuccess }: { supabas
   const [needsConfirmation, setNeedsConfirmation] = useState(false)
   const [busy, setBusy] = useState(false)
   const submit = async (event: FormEvent) => {
-    event.preventDefault(); setError(''); setNeedsConfirmation(false); setBusy(true)
-    const result = mode === 'sign-in' ? await supabase.auth.signInWithPassword({ email, password }) : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ?? `${window.location.origin}/auth/callback` } })
+    event.preventDefault(); setError(''); setNeedsConfirmation(false)
+    const normalizedEmail = email.trim().toLowerCase()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) { setError('Enter a complete email address, such as name@gmail.com.'); return }
+    if (password.length < 6) { setError('Use a password with at least 6 characters.'); return }
+    setBusy(true)
+    const result = mode === 'sign-in' ? await supabase.auth.signInWithPassword({ email: normalizedEmail, password }) : await supabase.auth.signUp({ email: normalizedEmail, password, options: { emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ?? `${window.location.origin}/auth/callback` } })
     setBusy(false)
     if (result.error) {
       const message = result.error.message.toLowerCase()
@@ -156,7 +160,7 @@ function EmailAuthModal({ supabase, initialMode, onClose, onSuccess }: { supabas
       return
     }
     if (mode === 'sign-up' && !result.data.session) { setError('Check your email to confirm your account.'); return }
-    onSuccess(email)
+    onSuccess(normalizedEmail)
   }
   return <div className="fixed inset-0 z-[80] flex items-end bg-black/50 p-0 sm:items-center sm:justify-center sm:p-5"><form onSubmit={submit} className="w-full rounded-t-3xl bg-white p-5 sm:max-w-[380px] sm:rounded-3xl"><div className="flex items-center justify-between"><div><h2 className="text-xl font-bold">{mode === 'sign-in' ? 'Welcome back' : 'Create your account'}</h2><p className="mt-1 text-sm text-[#6B7280]">Use email and password to continue.</p></div><button type="button" onClick={onClose} aria-label="Close" className="rounded-full bg-[#F5F7FB] p-2"><X className="size-5" /></button></div><label className="mt-6 block text-sm font-semibold">Email<input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-2 h-12 w-full rounded-xl border border-[#E5E9F2] px-3" /></label><label className="mt-4 block text-sm font-semibold">Password<input required minLength={6} type="password" value={password} onChange={(event) => setPassword(event.target.value)} className="mt-2 h-12 w-full rounded-xl border border-[#E5E9F2] px-3" /></label>{error && <div role="alert" className="mt-3 text-sm text-[#B33226]"><p>{error}</p>{needsConfirmation && <button type="button" onClick={async () => { setBusy(true); const { error: resendError } = await supabase.auth.resend({ type: 'signup', email }); setBusy(false); setError(resendError ? 'We could not resend the confirmation email.' : 'Confirmation email sent. Check your inbox.'); }} className="mt-2 block font-semibold underline">Resend confirmation email</button>}{mode === 'sign-in' && !needsConfirmation && <button type="button" onClick={() => { setMode('sign-up'); setError('') }} className="mt-2 block font-semibold text-[#2F5BFF] underline">Create an account instead</button>}</div>}<button disabled={busy} className="mt-5 h-12 w-full rounded-xl bg-[#2F5BFF] font-semibold text-white disabled:opacity-60">{busy ? 'Please wait...' : mode === 'sign-in' ? 'Sign in' : 'Create account'}</button><button type="button" onClick={() => setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in')} className="mt-4 w-full text-sm font-semibold text-[#2F5BFF]">{mode === 'sign-in' ? 'New to SubShield? Create an account' : 'Already have an account? Sign in'}</button></form></div>
 }
